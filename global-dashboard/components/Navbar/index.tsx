@@ -14,11 +14,11 @@ export default function Navbar() {
     const pathname = usePathname();
 
     return (
-        <nav className="border-b border-gray-800 bg-black/30 backdrop-blur-xl">
+        <nav className="border-b border-gray-800 ">
             <div className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
                     <Link href="/" className="flex items-center space-x-3">
-                        <div className="px-6 py-3 rounded-lg bg-black/40 backdrop-blur-sm">
+                        <div className="px-6 py-3 rounded-lg  ">
                             <span className="font-mono font-bold text-xl bg-gradient-to-r from-[#00ff88] to-[#00d4ff] bg-clip-text text-transparent tracking-wider">TradeArena</span>
                         </div>
                     </Link>

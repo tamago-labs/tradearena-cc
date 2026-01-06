@@ -4,6 +4,7 @@ import Providers from "./providers";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
+import Wrapper from "./wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,13 +33,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="min-h-screen flex flex-col">
+          <Wrapper>
             <Navbar />
             <main className="flex-1">
               {children}
             </main>
             <Footer />
-          </div>
+          </Wrapper>
         </Providers>
       </body>
     </html>
