@@ -11,25 +11,50 @@ const AgentCapabilities = () => {
 
     const toolCategories = [
         {
-            id: 'core-wallet',
-            title: 'Core Wallet Tools',
-            description: 'Essential wallet operations for managing SUI coins and transactions',
+            id: 'core-tools',
+            title: 'Core Agent Tools',
+            description: 'Essential wallet operations and data tools',
+            icon: '/tradearena-icon.png',
             tools: [
-                'Get all coin balances',
-                'Transfer coins to another address',
-                'Get crypto price from Pyth',
-                'Get SNS domain info'
+                'Query wallet balances and asset holdings',
+                'Transfer tokens and manage accounts',
+                'Fetch real-time market prices (Pyth, CoinMarketCap)',
+                // 'Resolve on-chain domain information',
+                'Store and retrieve AI trade decisions and reasoning on Walrus Storage'
             ]
         },
         {
-            id: 'validator-staking',
-            title: 'Validator Staking',
-            description: 'Complete staking operations for SUI token validation and rewards',
+            id: 'cronos-defi',
+            title: 'Cronos DeFi Tools',
+            description: 'DeFi execution and portfolio management on Cronos',
+            icon: '/cronos-icon.png',
             tools: [
-                'Get all active validators with performance data',
-                'Stake SUI tokens to a validator',
-                'Get all staked SUI tokens balance',
-                'Unstake SUI tokens from validator'
+                'Moonlander – trade execution and portfolio management',
+                'Delphi – prediction market participation',
+                'VVS Finance – token swaps and price quotes',
+                'Cronos X402 protocol integrations'
+            ]
+        },
+        {
+            id: 'kaia-defi',
+            title: 'KAIA DeFi Tools',
+            description: 'DeFi lending, trading, and portfolio tools on KAIA',
+            icon: '/kaia-icon.png',
+            tools: [
+                'KiloLend – supply, borrow, portfolio management, and reward tracking',
+                'DragonSwap – token swaps and liquidity queries'
+            ]
+        },
+        {
+            id: 'sui-defi',
+            title: 'Sui DeFi Tools',
+            description: 'Staking and network-level operations on Sui',
+            icon: '/sui-icon.png',
+            tools: [
+                'Query active validators and performance metrics',
+                'Stake SUI tokens to validators',
+                'View staked SUI balances and rewards',
+                'Unstake SUI tokens from validators'
             ]
         }
     ];
@@ -105,7 +130,7 @@ const AgentCapabilities = () => {
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        TradeArena provides comprehensive toolsets for AI agents to interact with the Sui ecosystem from validator staking to DeFi strategies, enabling fully autonomous vibe trading on-chain.
+                        TradeArena provides AI agents with everything needed for autonomous vibe trading — from on-chain execution and DeFi strategies to transparent trade data sharing via Walrus.
                     </motion.p>
                 </motion.div>
 
@@ -116,14 +141,14 @@ const AgentCapabilities = () => {
                         <>
                             <button
                                 onClick={prevCard}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-black/80 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-colors"
+                                className="absolute left-2 top-1/2 -translate-y-1/2 z-50 bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-4 hover:bg-gray-900 transition-all shadow-lg"
                                 aria-label="Previous category"
                             >
                                 <ChevronLeft className="w-5 h-5 text-gray-300" />
                             </button>
                             <button
                                 onClick={nextCard}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-black/80 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-colors"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 z-50 bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-4 hover:bg-gray-900 transition-all shadow-lg"
                                 aria-label="Next category"
                             >
                                 <ChevronRight className="w-5 h-5 text-gray-300" />
@@ -146,11 +171,11 @@ const AgentCapabilities = () => {
                                 className="flex-none w-full max-w-md"
                             >
                                 <div className="relative overflow-hidden bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800 rounded-xl p-8 hover:border-gray-600 transition-all duration-300 h-full">
-                                    {/* Background SUI Icon */}
+                                    {/* Background Chain Icon */}
                                     <div className="absolute top-[-60px] right-[-60px] opacity-10">
                                         <Image
-                                            src="/sui-icon.png"
-                                            alt="SUI"
+                                            src={category.icon}
+                                            alt={category.title}
                                             width={200}
                                             height={200}
                                             className="w-[200px] h-[200px]"
@@ -193,8 +218,8 @@ const AgentCapabilities = () => {
                                     key={index}
                                     onClick={() => scrollToCard(index)}
                                     className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
-                                            ? 'bg-green-400 w-8'
-                                            : 'bg-gray-600 hover:bg-gray-500'
+                                        ? 'bg-green-400 w-8'
+                                        : 'bg-gray-600 hover:bg-gray-500'
                                         }`}
                                     aria-label={`Go to category ${index + 1}`}
                                 />
