@@ -5,6 +5,7 @@ import AgentCapabilities from "./AgentCapabilities"
 import CriticalQuestion from "./CriticalQuestion"
 import Hero from "./Hero"
 import HowItWorks from "./HowItWorks"
+import CustomViews from "./CustomViews"
 import WhyDecentralizedStorage from "./WhyDecentralizedStorage"
 import StrandsFramework from "./StrandsFramework"
 import WhatIsArena from "./WhatIsArena"
@@ -16,11 +17,12 @@ const HomeContainer = () => {
             <Hero />
             <CriticalQuestion />
             <HowItWorks />
-            <WhyDecentralizedStorage /> 
-            <AgentCapabilities />
+            <CustomViews />
             <StrandsFramework />
-            <WhatIsArena/>
-            <FinalQA/>
+            <AgentCapabilities /> 
+            <WhyDecentralizedStorage />
+            <WhatIsArena />
+            <FinalQA />
         </div>
     )
 }

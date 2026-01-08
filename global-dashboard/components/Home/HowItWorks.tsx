@@ -14,7 +14,7 @@ const HowItWorks = () => {
         },
         {
             title: "Start AI Trading",
-            description: "Launch automated AI trading with persistent memory and real-time optimization"
+            description: "Launch AI trading with scheduled triggers and share context with others to improve strategies"
         }
     ];
 

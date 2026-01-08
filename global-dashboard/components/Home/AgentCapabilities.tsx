@@ -48,13 +48,23 @@ const AgentCapabilities = () => {
         {
             id: 'sui-defi',
             title: 'Sui DeFi Tools',
-            description: 'Staking and network-level operations on Sui',
+            description: 'DeFi staking, lending, and trading operations on Sui',
             icon: '/sui-icon.png',
             tools: [
-                'Query active validators and performance metrics',
-                'Stake SUI tokens to validators',
-                'View staked SUI balances and rewards',
-                'Unstake SUI tokens from validators'
+                'Sui Staking – List all validators, stake and unstake SUI',
+                'Scallop – Lend, borrow, list all pools',
+                'Cetus – Token swaps and get quote'
+            ]
+        },
+        {
+            id: 'aptos-defi',
+            title: 'Aptos DeFi Tools',
+            description: 'DEX, lending, and liquid staking on Aptos',
+            icon: '/aptos-icon.png',
+            tools: [
+                'Thala – Liquid staking (thAPT) and MOD stablecoin',
+                'Joule – Lend, borrow, and pool management',
+                'LiquidSwap – Token swaps and liquidity operations'
             ]
         }
     ];

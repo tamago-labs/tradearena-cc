@@ -307,7 +307,7 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
                         <div className="bg-gray-900 px-4 py-3 flex items-center justify-between border-b border-gray-800">
                             <div className="flex items-center gap-3">
                                 <Terminal className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-300 font-mono text-sm">TradeArena Local</span>
+                                <span className="text-gray-300 font-mono text-sm">TradeArena CLI</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <select

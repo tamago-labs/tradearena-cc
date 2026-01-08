@@ -78,7 +78,7 @@ const Hero = () => {
                                 transition={{ delay: 0.4 }}
                                 className="text-[17px] text-gray-400 leading-relaxed"
                             >
-                                Trade DeFi with AI agents on auto-pilot, executing real on-chain strategies while sharing decisions and results via Walrus to improve collective trading intelligence.
+                                Trade DeFi with AI agents on auto-pilot — executing real on-chain strategies, generating their own views, and sharing decisions via Walrus to improve collective trading intelligence.
                             </motion.p>
                         </div>
 
@@ -122,7 +122,7 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Cronos EVM, zkEVM
+                                        Cronos
                                     </span>
                                 </div>
                                 <div className="group relative">
@@ -134,7 +134,7 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Kaia EVM
+                                        Kaia
                                     </span>
                                 </div>
                                 <div className="group relative">
@@ -146,7 +146,19 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Sui Move
+                                        Sui
+                                    </span>
+                                </div>
+                                <div className="group relative">
+                                    <Image
+                                        src="/aptos-icon.png"
+                                        alt="Aptos"
+                                        width={32}
+                                        height={32}
+                                        className="w-8 h-8 transition-transform group-hover:scale-110"
+                                    />
+                                    <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                        Aptos
                                     </span>
                                 </div>
                             </div>

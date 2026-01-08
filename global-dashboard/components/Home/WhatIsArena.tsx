@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react'; 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WhatIsArena = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -72,10 +73,10 @@ const WhatIsArena = () => {
                         transition={{ delay: 0.2 }}
                     >
                         <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                            What is 
+                            Turns Chaos into
                         </span>
                         <span className="text-green-400">
-                            {' '}Arena?
+                            {' '}Clarity
                         </span>
                     </motion.h2>
                     <motion.p
@@ -84,7 +85,7 @@ const WhatIsArena = () => {
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        The <span className="text-green-400 font-semibold">Intelligence Layer</span> That <span className="text-green-400 font-semibold">Turns Chaos into Clarity</span>
+                        With TradeArena, you can see how decentralized trading data gets organized, ranked, and optimized for maximum clarity.
                     </motion.p>
                 </motion.div>
 
@@ -171,19 +172,36 @@ const WhatIsArena = () => {
                             </div>
                         </motion.div>
 
-                        {/* Tab Indicators */}
-                        <div className="flex justify-center gap-2 mt-6">
-                            {tabs.map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setActiveTab(index)}
-                                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                        index === activeTab
-                                            ? 'bg-green-400 w-8'
-                                            : 'bg-gray-600 hover:bg-gray-500'
-                                    }`}
-                                />
-                            ))}
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between items-center mt-6">
+                            <button
+                                onClick={() => setActiveTab((prev) => (prev === 0 ? tabs.length - 1 : prev - 1))}
+                                className="bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-all"
+                            >
+                                <ChevronLeft className="w-5 h-5 text-gray-300" />
+                            </button>
+                            
+                            {/* Tab Indicators */}
+                            <div className="flex gap-2">
+                                {tabs.map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setActiveTab(index)}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                            index === activeTab
+                                                ? 'bg-green-400 w-8'
+                                                : 'bg-gray-600 hover:bg-gray-500'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <button
+                                onClick={() => setActiveTab((prev) => (prev + 1) % tabs.length)}
+                                className="bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-all"
+                            >
+                                <ChevronRight className="w-5 h-5 text-gray-300" />
+                            </button>
                         </div>
                     </div>
                 </motion.div>
