@@ -24,7 +24,8 @@ class LogsMenu:
     def run(self):
         """Run the agent logs menu"""
         while True:
-            self._show_agent_logs_menu()
+            if self._show_agent_logs_menu():
+                break
     
     def _show_agent_logs_menu(self):
         """Display agent logs menu"""
@@ -36,36 +37,35 @@ class LogsMenu:
         )
         
         menu_text = Text.from_markup(
-            "\n❯ [bold green]View recent trades[/bold green]\n"
-            "  [bold green]View decision history[/bold green]\n"
-            "  [bold green]Export logs[/bold green]\n"
-            "  [bold yellow]Back[/bold yellow]",
+            "\n[bold green]1. View recent trades[/bold green]\n"
+            "[bold green]2. View decision history[/bold green]\n"
+            "[bold green]3. Export logs[/bold green]\n"
+            "[bold yellow]4. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(menu_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
         
         self.console.print(panel)
         
-        choice = Prompt.ask(
-            "\n[bold]Enter your choice[/bold]",
-            choices=["1", "2", "3", "4", "trades", "decisions", "export", "back"],
-            default=None
-        )
+        choice = Prompt.ask("\n[bold]Enter your choice (1-4)[/bold]")
         
-        if choice in ["1", "trades"]:
-            self._view_recent_trades()
-        elif choice in ["2", "decisions"]:
-            self._view_decision_history()
-        elif choice in ["3", "export"]:
-            self._export_logs()
+        if choice in ["1", "real_time"]:
+            self._view_real_time_logs()
+            return False
+        elif choice in ["2", "historical"]:
+            self._view_historical_logs()
+            return False
+        elif choice in ["3", "clear"]:
+            self._clear_logs()
+            return False
         elif choice in ["4", "back"]:
-            break
+            return True
     
     def _view_recent_trades(self):
         """View recent trades"""
@@ -126,7 +126,7 @@ class LogsMenu:
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
@@ -135,11 +135,7 @@ class LogsMenu:
         
         # Offer additional options if trades exist
         if trades:
-            action = Prompt.ask(
-                "\n[bold]Select action[/bold]",
-                choices=["details", "filter", "export", "back"],
-                default="back"
-            )
+            action = Prompt.ask("\n[bold]Select action (details/filter/export/back)[/bold]")
             
             if action == "details":
                 self._view_trade_details(trades)
@@ -233,28 +229,24 @@ class LogsMenu:
         
         info_text = Text.from_markup(
             "\n[bold]Filter Options:[/bold]\n"
-            "❯ [bold green]Filter by action type[/bold green]\n"
-            "  [bold green]Filter by token[/bold green]\n"
-            "  [bold green]Filter by time range[/bold green]\n"
-            "  [bold green]Filter by value range[/bold green]\n"
-            "  [bold yellow]Back[/bold yellow]",
+            "[bold green]1. Filter by action type[/bold green]\n"
+            "[bold green]2. Filter by token[/bold green]\n"
+            "[bold green]3. Filter by time range[/bold green]\n"
+            "[bold green]4. Filter by value range[/bold green]\n"
+            "[bold yellow]5. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
         
         self.console.print(panel)
         
-        filter_type = Prompt.ask(
-            "\n[bold]Select filter type[/bold]",
-            choices=["1", "2", "3", "4", "5", "action", "token", "time", "value", "back"],
-            default=None
-        )
+        filter_type = Prompt.ask("\n[bold]Select filter type (1-5)[/bold]")
         
         if filter_type in ["1", "action"]:
             self._filter_by_action()
@@ -502,7 +494,7 @@ class LogsMenu:
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
@@ -586,27 +578,23 @@ class LogsMenu:
         
         info_text = Text.from_markup(
             "\n[bold]Export Options:[/bold]\n"
-            "❯ [bold green]Export recent trades[/bold green]\n"
-            "  [bold green]Export decision history[/bold green]\n"
-            "  [bold green]Export all logs[/bold green]\n"
-            "  [bold yellow]Back[/bold yellow]",
+            "[bold green]1. Export recent trades[/bold green]\n"
+            "[bold green]2. Export decision history[/bold green]\n"
+            "[bold green]3. Export all logs[/bold green]\n"
+            "[bold yellow]4. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
         
         self.console.print(panel)
         
-        export_type = Prompt.ask(
-            "\n[bold]Select export type[/bold]",
-            choices=["1", "2", "3", "4", "trades", "decisions", "all", "back"],
-            default=None
-        )
+        export_type = Prompt.ask("\n[bold]Select export type (1-4)[/bold]")
         
         if export_type in ["4", "back"]:
             return
@@ -659,3 +647,4 @@ class LogsMenu:
         
         self.console.print("\nPress Enter to continue...")
         input()
+        

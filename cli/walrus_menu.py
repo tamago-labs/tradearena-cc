@@ -21,7 +21,8 @@ class WalrusMenu:
     def run(self):
         """Run the walrus settings menu"""
         while True:
-            self._show_walrus_settings_menu()
+            if self._show_walrus_settings_menu():
+                break
     
     def _show_walrus_settings_menu(self):
         """Display walrus settings menu"""
@@ -40,17 +41,17 @@ class WalrusMenu:
             f"\n[bold]Current Configuration:[/bold]\n"
             f"Status: [cyan]{'Enabled' if enabled else 'Disabled'}[/cyan]\n"
             f"Visibility: [cyan]{visibility.title()}[/cyan]\n"
-            f"\n❯ [bold green]Enable Walrus storage[/bold green]\n"
-            f"  [bold green]Disable Walrus storage[/bold green]\n"
-            f"  [bold green]Set visibility (public / private)[/bold green]\n"
-            f"  [bold green]View stored records[/bold green]\n"
-            f"  [bold yellow]Back[/bold yellow]",
+            f"\n[bold green]1. Enable Walrus storage[/bold green]\n"
+            "[bold green]2. Disable Walrus storage[/bold green]\n"
+            "[bold green]3. Set visibility (public / private)[/bold green]\n"
+            "[bold green]4. View stored records[/bold green]\n"
+            "[bold yellow]5. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(config_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
@@ -58,21 +59,25 @@ class WalrusMenu:
         self.console.print(panel)
         
         choice = Prompt.ask(
-            "\n[bold]Enter your choice[/bold]",
-            choices=["1", "2", "3", "4", "5", "enable", "disable", "visibility", "records", "back"],
+            "\n[bold]Enter your choice (1-5)[/bold]",
+            choices=["1", "2", "3", "4", "5"],
             default=None
         )
         
         if choice in ["1", "enable"]:
             self._enable_walrus_storage()
+            return False
         elif choice in ["2", "disable"]:
             self._disable_walrus_storage()
+            return False
         elif choice in ["3", "visibility"]:
             self._set_visibility()
+            return False
         elif choice in ["4", "records"]:
             self._view_stored_records()
+            return False
         elif choice in ["5", "back"]:
-            break
+            return True
     
     def _enable_walrus_storage(self):
         """Enable Walrus storage"""
@@ -106,7 +111,7 @@ class WalrusMenu:
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="green",
             padding=(1, 2)
         )
@@ -163,7 +168,7 @@ class WalrusMenu:
         
         panel = Panel(
             Align.center(warning_text),
-            title=Align.center(title),
+            title=title,
             border_style="red",
             padding=(1, 2)
         )
@@ -204,21 +209,21 @@ class WalrusMenu:
         info_text = Text.from_markup(
             f"\n[bold]Current visibility: [cyan]{current_visibility.title()}[/cyan][/bold]\n\n"
             "[bold]Visibility Options:[/bold]\n\n"
-            "❯ [bold green]Public[/bold green]\n"
-            "   Anyone with the link can view stored data\n"
-            "   Useful for team collaboration and transparency\n"
-            "   Data is discoverable and shareable\n\n"
-            "  [bold red]Private[/bold red]\n"
-            "   Only you can access stored data\n"
-            "   Maximum privacy and security\n"
-            "   Data is encrypted and access-controlled\n\n"
+            "[bold green]Public[/bold green]\n"
+            "Anyone with the link can view stored data\n"
+            "Useful for team collaboration and transparency\n"
+            "Data is discoverable and shareable\n\n"
+            "[bold red]Private[/bold red]\n"
+            "Only you can access stored data\n"
+            "Maximum privacy and security\n"
+            "Data is encrypted and access-controlled\n\n"
             "[dim]You can change this setting at any time.[/dim]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
@@ -304,7 +309,7 @@ class WalrusMenu:
         
         panel = Panel(
             Align.center(info_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )

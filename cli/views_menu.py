@@ -21,7 +21,8 @@ class ViewsMenu:
     def run(self):
         """Run the manage views menu"""
         while True:
-            self._show_manage_views_menu()
+            if self._show_manage_views_menu():
+                break
     
     def _show_manage_views_menu(self):
         """Display manage views menu"""
@@ -33,36 +34,35 @@ class ViewsMenu:
         )
         
         menu_text = Text.from_markup(
-            "\n❯ [bold green]List available views[/bold green]\n"
-            "  [bold green]View specific dashboard[/bold green]\n"
-            "  [bold green]Delete view[/bold green]\n"
-            "  [bold yellow]Back[/bold yellow]",
+            "\n[bold green]1. List available views[/bold green]\n"
+            "[bold green]2. View specific dashboard[/bold green]\n"
+            "[bold green]3. Delete view[/bold green]\n"
+            "[bold yellow]4. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(menu_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
         
         self.console.print(panel)
         
-        choice = Prompt.ask(
-            "\n[bold]Enter your choice[/bold]",
-            choices=["1", "2", "3", "4", "list", "view", "delete", "back"],
-            default=None
-        )
+        choice = Prompt.ask("\n[bold]Enter your choice (1-4)[/bold]")
         
         if choice in ["1", "list"]:
             self._list_available_views()
+            return False
         elif choice in ["2", "view"]:
             self._view_specific_dashboard()
+            return False
         elif choice in ["3", "delete"]:
             self._delete_view()
+            return False
         elif choice in ["4", "back"]:
-            break
+            return True
     
     def _list_available_views(self):
         """List all available views"""
@@ -201,3 +201,4 @@ class ViewsMenu:
         
         self.console.print("\nPress Enter to continue...")
         input()
+        

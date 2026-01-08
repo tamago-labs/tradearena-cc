@@ -21,7 +21,8 @@ class ConfigMenu:
     def run(self):
         """Run the configure agent menu"""
         while True:
-            self._show_configure_agent_menu()
+            if self._show_configure_agent_menu():
+                break
     
     def _show_configure_agent_menu(self):
         """Display configure agent menu"""
@@ -33,39 +34,39 @@ class ConfigMenu:
         )
         
         menu_text = Text.from_markup(
-            "\n❯ [bold green]AI Model[/bold green]\n"
-            "  [bold green]MCP Tools[/bold green]\n"
-            "  [bold green]Strategy & Risk[/bold green]\n"
-            "  [bold green]HTML Interface[/bold green]\n"
-            "  [bold yellow]Back[/bold yellow]",
+            "\n[bold green]1. AI Model[/bold green]\n"
+            "[bold green]2. MCP Tools[/bold green]\n"
+            "[bold green]3. Strategy & Risk[/bold green]\n"
+            "[bold green]4. HTML Interface[/bold green]\n"
+            "[bold yellow]5. Back[/bold yellow]",
             justify="left"
         )
         
         panel = Panel(
             Align.center(menu_text),
-            title=Align.center(title),
+            title=title,
             border_style="blue",
             padding=(1, 2)
         )
         
         self.console.print(panel)
         
-        choice = Prompt.ask(
-            "\n[bold]Enter your choice[/bold]",
-            choices=["1", "2", "3", "4", "5", "model", "mcp", "strategy", "html", "back"],
-            default=None
-        )
+        choice = Prompt.ask("\n[bold]Enter your choice (1-5)[/bold]")
         
         if choice in ["1", "model"]:
             self._ai_model_menu()
+            return False
         elif choice in ["2", "mcp"]:
             self._mcp_tools_menu()
+            return False
         elif choice in ["3", "strategy"]:
             self._strategy_risk_menu()
+            return False
         elif choice in ["4", "html"]:
             self._html_interface_menu()
+            return False
         elif choice in ["5", "back"]:
-            break
+            return True
     
     def _ai_model_menu(self):
         """AI Model configuration menu"""
@@ -89,28 +90,24 @@ class ConfigMenu:
                 f"Model: [cyan]{current_model}[/cyan]\n"
                 f"Temperature: [cyan]{current_temp}[/cyan]\n"
                 f"Max Tokens: [cyan]{current_tokens}[/cyan]\n"
-                f"\n❯ [bold green]Change provider[/bold green]\n"
-                f"  [bold green]Change model[/bold green]\n"
-                f"  [bold green]Change temperature[/bold green]\n"
-                f"  [bold green]Change max tokens[/bold green]\n"
-                f"  [bold yellow]Back[/bold yellow]",
+                f"\n[bold green]1. Change provider[/bold green]\n"
+                "[bold green]2. Change model[/bold green]\n"
+                "[bold green]3. Change temperature[/bold green]\n"
+                "[bold green]4. Change max tokens[/bold green]\n"
+                "[bold yellow]5. Back[/bold yellow]",
                 justify="left"
             )
             
             panel = Panel(
                 Align.center(config_text),
-                title=Align.center(title),
+                title=title,
                 border_style="green",
                 padding=(1, 2)
             )
             
             self.console.print(panel)
             
-            choice = Prompt.ask(
-                "\n[bold]Enter your choice[/bold]",
-                choices=["1", "2", "3", "4", "5", "provider", "model", "temp", "tokens", "back"],
-                default=None
-            )
+            choice = Prompt.ask("\n[bold]Enter your choice (1-5)[/bold]")
             
             if choice in ["1", "provider"]:
                 self._change_provider()
@@ -122,6 +119,10 @@ class ConfigMenu:
                 self._change_max_tokens()
             elif choice in ["5", "back"]:
                 break
+            else:
+                self.console.print("[red]Invalid choice. Please enter a number between 1-5.[/red]")
+                self.console.print("Press Enter to continue...")
+                input()
     
     def _change_provider(self):
         """Change AI model provider"""
@@ -172,8 +173,7 @@ class ConfigMenu:
         
         self.console.print(f"[bold]Available models for {provider}:[/bold]")
         for i, model in enumerate(models, 1):
-            marker = "❯" if model == current_model else " "
-            self.console.print(f"{marker} {i}. [cyan]{model}[/cyan]")
+            self.console.print(f"{i}. [cyan]{model}[/cyan]")
         
         try:
             choice = int(Prompt.ask(f"Enter model number (current: {current_model})")) - 1
@@ -239,27 +239,23 @@ class ConfigMenu:
             
             menu_text = Text.from_markup(
                 "\n[bold]Select ecosystem tools to enable:[/bold]\n\n"
-                "❯ [bold green]Sui Tools[/bold green]\n"
-                "  [bold green]KAIA Tools[/bold green]\n"
-                "  [bold green]Cronos Tools[/bold green]\n"
-                "  [bold yellow]Back[/bold yellow]",
+                "[bold green]1. Sui Tools[/bold green]\n"
+                "[bold green]2. KAIA Tools[/bold green]\n"
+                "[bold green]3. Cronos Tools[/bold green]\n"
+                "[bold yellow]4. Back[/bold yellow]",
                 justify="left"
             )
             
             panel = Panel(
                 Align.center(menu_text),
-                title=Align.center(title),
+                title=title,
                 border_style="green",
                 padding=(1, 2)
             )
             
             self.console.print(panel)
             
-            choice = Prompt.ask(
-                "\n[bold]Enter your choice[/bold]",
-                choices=["1", "2", "3", "4", "sui", "kaia", "cronos", "back"],
-                default=None
-            )
+            choice = Prompt.ask("\n[bold]Enter your choice (1-4)[/bold]")
             
             if choice in ["1", "sui"]:
                 self._sui_tools_menu()
@@ -269,6 +265,10 @@ class ConfigMenu:
                 self._cronos_tools_menu()
             elif choice in ["4", "back"]:
                 break
+            else:
+                self.console.print("[red]Invalid choice. Please enter a number between 1-4.[/red]")
+                self.console.print("Press Enter to continue...")
+                input()
     
     def _sui_tools_menu(self):
         """Sui tools configuration"""
@@ -426,27 +426,23 @@ class ConfigMenu:
                 f"Strategy Template: [cyan]{current_template}[/cyan]\n"
                 f"Max Position Size: [cyan]${current_position_size}[/cyan]\n"
                 f"Drawdown Limit: [cyan]{current_drawdown:.1%}[/cyan]\n"
-                f"\n❯ [bold green]Select strategy template[/bold green]\n"
-                f"  [bold green]Set max position size[/bold green]\n"
-                f"  [bold green]Set drawdown limit[/bold green]\n"
-                f"  [bold yellow]Back[/bold yellow]",
+                f"\n[bold green]1. Select strategy template[/bold green]\n"
+                "[bold green]2. Set max position size[/bold green]\n"
+                "[bold green]3. Set drawdown limit[/bold green]\n"
+                "[bold yellow]4. Back[/bold yellow]",
                 justify="left"
             )
             
             panel = Panel(
                 Align.center(config_text),
-                title=Align.center(title),
+                title=title,
                 border_style="green",
                 padding=(1, 2)
             )
             
             self.console.print(panel)
             
-            choice = Prompt.ask(
-                "\n[bold]Enter your choice[/bold]",
-                choices=["1", "2", "3", "4", "template", "position", "drawdown", "back"],
-                default=None
-            )
+            choice = Prompt.ask("\n[bold]Enter your choice (1-4)[/bold]")
             
             if choice in ["1", "template"]:
                 self._select_strategy_template()
@@ -456,6 +452,10 @@ class ConfigMenu:
                 self._set_drawdown_limit()
             elif choice in ["4", "back"]:
                 break
+            else:
+                self.console.print("[red]Invalid choice. Please enter a number between 1-4.[/red]")
+                self.console.print("Press Enter to continue...")
+                input()
     
     def _select_strategy_template(self):
         """Select strategy template"""
@@ -466,8 +466,7 @@ class ConfigMenu:
         
         self.console.print("[bold]Select strategy template:[/bold]\n")
         for i, template in enumerate(templates, 1):
-            marker = "❯" if template == current_template else " "
-            self.console.print(f"{marker} {i}. [cyan]{template.title()}[/cyan]")
+            self.console.print(f"{i}. [cyan]{template.title()}[/cyan]")
         
         try:
             choice = int(Prompt.ask(f"Enter template number (current: {current_template})")) - 1
@@ -542,27 +541,23 @@ class ConfigMenu:
                 f"[bold]Current Configuration:[/bold]\n"
                 f"Status: [cyan]{'Enabled' if enabled else 'Disabled'}[/cyan]\n"
                 f"Port: [cyan]{port}[/cyan]\n"
-                f"\n❯ [bold green]Enable agent-generated UI[/bold green]\n"
-                f"  [bold green]Set local server port[/bold green]\n"
-                f"  [bold green]Reset UI state[/bold green]\n"
-                f"  [bold yellow]Back[/bold yellow]",
+                f"\n[bold green]1. Enable agent-generated UI[/bold green]\n"
+                "[bold green]2. Set local server port[/bold green]\n"
+                "[bold green]3. Reset UI state[/bold green]\n"
+                "[bold yellow]4. Back[/bold yellow]",
                 justify="left"
             )
             
             panel = Panel(
                 Align.center(config_text),
-                title=Align.center(title),
+                title=title,
                 border_style="green",
                 padding=(1, 2)
             )
             
             self.console.print(panel)
             
-            choice = Prompt.ask(
-                "\n[bold]Enter your choice[/bold]",
-                choices=["1", "2", "3", "4", "enable", "port", "reset", "back"],
-                default=None
-            )
+            choice = Prompt.ask("\n[bold]Enter your choice (1-4)[/bold]")
             
             if choice in ["1", "enable"]:
                 new_state = not enabled
@@ -577,6 +572,10 @@ class ConfigMenu:
                 self._reset_ui_state()
             elif choice in ["4", "back"]:
                 break
+            else:
+                self.console.print("[red]Invalid choice. Please enter a number between 1-4.[/red]")
+                self.console.print("Press Enter to continue...")
+                input()
     
     def _set_html_port(self):
         """Set HTML interface port"""
@@ -609,3 +608,4 @@ class ConfigMenu:
         
         self.console.print("\nPress Enter to continue...")
         input()
+        

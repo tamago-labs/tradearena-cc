@@ -24,12 +24,12 @@ class MenuSystem:
         self.mock_services = MockServices()
         self.running = True
     
-    def run(self):
+    def run(self, server_started=False):
         """Start the main menu loop"""
         while self.running:
-            self._show_main_menu()
+            self._show_main_menu(server_started)
     
-    def _show_main_menu(self):
+    def _show_main_menu(self, server_started=False):
         """Display main menu and get user selection"""
         self.console.clear()
         
@@ -40,18 +40,23 @@ class MenuSystem:
             justify="center"
         )
         
-        # Create menu options
-        menu_text = Text.from_markup(
-            "\n[bold]What would you like to do?[/bold]\n\n"
-            "[bold cyan]1.[/bold cyan] [bold green]Interactive mode[/bold green]\n"
-            "[bold cyan]2.[/bold cyan] [bold green]Scheduled mode[/bold green]\n"
-            "[bold cyan]3.[/bold cyan] [bold green]Manage Views[/bold green]\n"
-            "[bold cyan]4.[/bold cyan] [bold green]Configure Agent[/bold green]\n"
-            "[bold cyan]5.[/bold cyan] [bold green]Walrus Settings[/bold green]\n"
-            "[bold cyan]6.[/bold cyan] [bold green]Agent Logs[/bold green]\n"
-            "[bold cyan]7.[/bold cyan] [bold red]Exit[/bold red]",
-            justify="left"
-        )
+        # Create menu content
+        menu_content = ""
+        
+        # Add web interface info if server is running
+        if server_started:
+            menu_content += "[bold cyan]🌐 Web Interface Available[/bold cyan]\n[dim]Open your browser and navigate to:[/dim]\n[bold green]http://localhost:8000[/bold green]\n\n"
+        
+        menu_content += "[bold]What would you like to do?[/bold]\n\n"
+        menu_content += "[bold cyan]1.[/bold cyan] [bold green]Interactive mode[/bold green]\n"
+        menu_content += "[bold cyan]2.[/bold cyan] [bold green]Scheduled mode[/bold green]\n"
+        menu_content += "[bold cyan]3.[/bold cyan] [bold green]Manage Views[/bold green]\n"
+        menu_content += "[bold cyan]4.[/bold cyan] [bold green]Configure Agent[/bold green]\n"
+        menu_content += "[bold cyan]5.[/bold cyan] [bold green]Walrus Settings[/bold green]\n"
+        menu_content += "[bold cyan]6.[/bold cyan] [bold green]Agent Logs[/bold green]\n"
+        menu_content += "[bold cyan]7.[/bold cyan] [bold red]Exit[/bold red]"
+        
+        menu_text = Text.from_markup(menu_content, justify="left")
         
         # Display the panel
         panel = Panel(
@@ -87,11 +92,7 @@ class MenuSystem:
             self._agent_logs_menu()
         elif choice in ["7", "exit"]:
             self.running = False
-            self.console.print("[bold green]Goodbye![/bold green]")
-        else:
-            self.console.print("[red]Invalid choice. Please try again.[/red]")
-            self.console.print("Press Enter to continue...")
-            input()
+            self.console.print("[bold yellow]👋 Goodbye! Thanks for using TradeArena CLI.[/bold yellow]")
     
     def _interactive_mode_menu(self):
         """Interactive mode menu"""
@@ -349,6 +350,52 @@ class MenuSystem:
         from .walrus_menu import WalrusMenu
         walrus_menu = WalrusMenu(self.console, self.config, self.mock_services)
         walrus_menu.run()
+    
+    def _web_interface_info(self):
+        """Display web interface information"""
+        self.console.clear()
+        
+        title = Text.from_markup(
+            "[bold blue]Web Interface Information[/bold blue]",
+            justify="center"
+        )
+        
+        # Check if server is available
+        try:
+            from server import start_server_thread, stop_server, app
+            server_available = True
+        except ImportError:
+            server_available = False
+        
+        web_info = Text.from_markup(
+            "\n[bold]Web Interface Status:[/bold]\n\n"
+            f"[bold]Server Status:[/bold] {'[bold green]Available[/bold green]' if server_available else '[bold red]Not Available[/bold red]'}\n"
+            "[bold]Default URL:[/bold] [cyan]http://localhost:8000[/cyan]\n\n"
+            "[bold]Available Pages:[/bold]\n"
+            "• [cyan]/[/cyan] - Main Dashboard\n"
+            "• [cyan]/settings[/cyan] - Configuration Settings\n"
+            "• [cyan]/agents[/cyan] - Agent Management\n\n"
+            "[bold]API Endpoints:[/bold]\n"
+            "• [cyan]/api/settings[/cyan] - Get current settings\n"
+            "• [cyan]/api/agents[/cyan] - List all agents\n"
+            "• [cyan]/api/status[/cyan] - System status\n"
+            "• [cyan]/api/trades[/cyan] - Recent trades\n"
+            "• [cyan]/api/performance[/cyan] - Performance metrics\n\n"
+            "[dim]Note: The web server runs in the background when you start TradeArena CLI.[/dim]\n"
+            "[dim]If the server is not available, please ensure FastAPI and Uvicorn are installed:[/dim]\n"
+            "[dim]pip install fastapi uvicorn[standard][/dim]\n"
+        )
+        
+        panel = Panel(
+            web_info,
+            title=title,
+            border_style="cyan",
+            padding=(1, 2)
+        )
+        
+        self.console.print(panel)
+        self.console.print("\n[dim]Press Enter to continue...[/dim]")
+        input()
     
     def _agent_logs_menu(self):
         """Agent logs menu"""
