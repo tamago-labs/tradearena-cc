@@ -6,7 +6,7 @@ Template generation functions
 from .static import BASE_CSS, MENU_JS, SUBMENU_JS
 
 # ASCII art for TRADE ARENA
-TRADE_ARENA_ASCII = """
+TRADE_ARENA_ASCII = r"""
  .----------------.  .----------------.  .----------------.  .----------------.  .----------------.   .----------------.  .----------------.  .----------------.  .-----------------. .----------------. 
 | .--------------. || .--------------. || .--------------. || .--------------. || .--------------. | | .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |
 | |  _________   | || |  _______     | || |      __      | || |  ________    | || |  _________   | | | |      __      | || |  _______     | || |  _________   | || | ____  _____  | || |      __      | |
@@ -44,13 +44,25 @@ def base_template(title: str, content: str, additional_css: str = "", additional
 </body>
 </html>"""
 
-def main_page_template() -> str:
+def main_page_template(agents: list = None) -> str:
     """Main menu page template"""
+    # Determine agent status based on agent count
+    agent_count = len(agents) if agents else 0
+    agent_status = "online" if agent_count > 0 else "warning"
+    
+    # Generate status text message
+    if agent_count == 0:
+        status_text = "Setup Required"
+    elif agent_count == 1:
+        status_text = "1 Agent Ready"
+    else:
+        status_text = f"{agent_count} Agents Ready"
+    
     content = f"""
         <div class="terminal-header">
             <div class="ascii-art">{TRADE_ARENA_ASCII}</div>
-            <div class="title">Your Vibe Trading Arena for AI Agents</div>
-            <div class="subtitle">Cronos · Sui · Walrus — v1.0.0</div>
+            <div class="title">Vibe Trading Arena for AI Agents</div>
+            <div class="subtitle">Cronos · Kaia · Sui · Walrus Verified — v1.0.0</div>
         </div>
         
         <div class="menu-container">
@@ -63,8 +75,8 @@ def main_page_template() -> str:
                     <div class="menu-item" data-action="views">
                         <span class="status-indicator online"></span>Manage Views
                     </div>
-                    <div class="menu-item" data-action="config">
-                        <span class="status-indicator warning"></span>Configure Agent
+                    <div class="menu-item" data-action="manage-agents">
+                        <span class="status-indicator {agent_status}"></span>Manage Agents [{status_text}]
                     </div>
                     <div class="menu-item" data-action="walrus">
                         <span class="status-indicator online"></span>Walrus Settings
@@ -82,6 +94,457 @@ def main_page_template() -> str:
     """
     
     return base_template("TradeArena Terminal", content, additional_js=MENU_JS)
+
+def manage_agents_template(agents: list = None) -> str:
+    """Manage agents page template"""
+    additional_css = """
+.agent-info {
+    font-size: 12px;
+    color: #00cc00;
+    margin-left: 10px;
+}
+.agent-details {
+    font-size: 11px;
+    color: #888888;
+    margin-left: 20px;
+}
+.empty-state { 
+    color: #888888;
+    font-style: italic; 
+}
+.menu-item.selected .agent-info {
+    color: #000000;
+}
+    """
+    
+    # Generate agent menu items dynamically
+    agent_items = ""
+    if agents and len(agents) > 0:
+        for agent in agents:
+            agent_items += f"""
+                    <div class="menu-item" data-action="agent-{agent['id']}">
+                        {agent['name']} <span class="agent-info">[{agent['ai_provider'].replace('_', ' ').title()} | {agent['trading_chain'].title()}]</span>
+                    </div>
+            """
+    else:
+        agent_items = """
+                    <div class="menu-item" data-action="no-agents">
+                        <span class="empty-state" style="color: #888888 !important; font-style: italic !important; text-align: center !important; display: block !important;">No agents available. Create an agent first.</span>
+                    </div>
+        """
+    
+    content = f"""
+        <div class="terminal-header">
+            <div class="title">MANAGE AGENTS</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="menu">
+                <div class="menu-header">Agent Configurations</div>
+                <div id="menuItems">
+{agent_items}
+                    <div class="menu-item" data-action="create-new">
+                        + Create New Agent
+                    </div>
+                    <div class="menu-item" data-action="back">Back to Main Menu</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    # Generate dynamic JavaScript
+    agent_js_cases = ""
+    if agents and len(agents) > 0:
+        for agent in agents:
+            agent_js_cases += f"""
+            case 'agent-{agent['id']}':
+                window.location.href = '/manage-agent/{agent['id']}';
+                break;
+            """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class ManageAgentsMenu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+{agent_js_cases}
+            case 'no-agents':
+                // Do nothing - just a placeholder
+                break;
+            case 'create-new':
+                window.location.href = '/create-agent';
+                break;
+            case 'back':
+                window.location.href = '/';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new ManageAgentsMenu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Manage Agents", content, additional_css, additional_js)
+
+def manage_agent_template(agent_id: str, agent_data: dict = None) -> str:
+    """Manage individual agent page template"""
+    if agent_data is None:
+        agent_data = {
+            "name": "Agent #1",
+            "ai_provider": "anthropic",
+            "trading_chain": "cronos"
+        }
+    
+    additional_css = """
+.agent-details {
+    border: 2px solid #00ff00;
+    padding: 20px;
+    background: rgba(0, 255, 0, 0.05);
+    margin: 20px 0;
+}
+.detail-row {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+}
+.detail-label {
+    color: #00cc00;
+    font-weight: bold;
+}
+.detail-value {
+    color: #ffffff;
+}
+    """
+    
+    content = f"""
+        <div class="terminal-header">
+            <div class="title">MANAGE AGENT - {agent_data['name']}</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="agent-details">
+                <div class="detail-row">
+                    <span class="detail-label">Agent ID:</span>
+                    <span class="detail-value">{agent_id}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{agent_data['name']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">AI Provider:</span>
+                    <span class="detail-value">{agent_data['ai_provider']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Trading Chain:</span>
+                    <span class="detail-value">{agent_data['trading_chain']}</span>
+                </div>
+            </div>
+            
+            <div class="menu">
+                <div class="menu-header">Agent Options</div>
+                <div id="menuItems">
+                    <div class="menu-item" data-action="delete-agent">Delete Agent</div>
+                    <div class="menu-item" data-action="back">Back to Agent List</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class ManageAgentMenu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+            case 'delete-agent':
+                if (confirm('Are you sure you want to delete this agent?')) {{
+                    window.location.href = '/delete-agent/{agent_id}';
+                }}
+                break;
+            case 'back':
+                window.location.href = '/manage-agents';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new ManageAgentMenu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Manage Agent", content, additional_css, additional_js)
+
+def create_agent_template() -> str:
+    """Create new agent page template"""
+    additional_css = """
+.step-info {
+    color: #00cc00;
+    font-size: 14px;
+    margin: 5px auto;
+    text-align: center;
+    font-weight: bold;
+    display: block;
+    width: 100%;
+}
+    """
+    
+    content = """
+        <div class="terminal-header">
+            <div class="title">CREATE NEW AGENT</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="step-info">Step 1: Select AI Provider</div>
+            <div class="menu">
+                <div class="menu-header">AI Provider</div>
+                <div id="menuItems">
+                    <div class="menu-item" data-action="amazon-bedrock">Amazon Bedrock</div>
+                    <div class="menu-item" data-action="anthropic">Anthropic</div>
+                    <div class="menu-item" data-action="gemini">Gemini</div>
+                    <div class="menu-item" data-action="openai-compatible">OpenAI Compatible</div>
+                    <div class="menu-item" data-action="back">Back to Agent List</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class CreateAgentMenu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+            case 'amazon-bedrock':
+            case 'anthropic':
+            case 'gemini':
+            case 'openai-compatible':
+                window.location.href = '/create-agent/step2?provider=' + action;
+                break;
+            case 'back':
+                window.location.href = '/manage-agents';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new CreateAgentMenu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Create Agent", content, additional_css, additional_js)
+
+def create_agent_step2_template(ai_provider: str) -> str:
+    """Create agent step 2 - select trading chain"""
+    additional_css = """
+.step-info {
+    color: #00cc00;
+    font-size: 14px;
+    margin: 5px auto;
+    text-align: center;
+    font-weight: bold;
+    display: block;
+    width: 100%;
+}
+.provider-info {
+    color: #ffff00;
+    font-size: 12px;
+    text-align: center;
+    margin: 3px auto;
+    display: block;
+    width: 100%;
+}
+    """
+    
+    provider_names = {
+        "amazon-bedrock": "Amazon Bedrock",
+        "anthropic": "Anthropic",
+        "gemini": "Gemini",
+        "openai-compatible": "OpenAI Compatible"
+    }
+    
+    content = f"""
+        <div class="terminal-header">
+            <div class="title">CREATE NEW AGENT</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="step-info">Step 2: Select Trading Chain</div>
+            <div class="provider-info">AI Provider: {provider_names.get(ai_provider, ai_provider)}</div>
+            <div class="menu">
+                <div class="menu-header">Trading Chain</div>
+                <div id="menuItems">
+                    <div class="menu-item" data-action="cronos">Cronos</div>
+                    <div class="menu-item" data-action="kaia">Kaia</div>
+                    <div class="menu-item" data-action="sui">Sui</div>
+                    <div class="menu-item" data-action="back">Back</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class CreateAgentStep2Menu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+            case 'cronos':
+            case 'kaia':
+            case 'sui':
+                window.location.href = '/create-agent/confirm?provider={ai_provider}&chain=' + action;
+                break;
+            case 'back':
+                window.location.href = '/create-agent';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new CreateAgentStep2Menu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Create Agent Step 2", content, additional_css, additional_js)
+
+def create_agent_confirm_template(ai_provider: str, trading_chain: str) -> str:
+    """Create agent confirmation page"""
+    additional_css = """
+.step-info {
+    color: #00cc00;
+    font-size: 14px;
+    margin: 5px auto;
+    text-align: center;
+    font-weight: bold;
+    display: block;
+    width: 100%;
+}
+.confirm-info {
+    border: 2px solid #00ff00;
+    padding: 15px;
+    background: rgba(0, 255, 0, 0.05);
+    margin: 10px auto;
+    max-width: 400px;
+}
+.confirm-row {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+}
+.confirm-label {
+    color: #00cc00;
+    font-weight: bold;
+}
+.confirm-value {
+    color: #ffffff;
+}
+    """
+    
+    provider_names = {
+        "amazon-bedrock": "Amazon Bedrock",
+        "anthropic": "Anthropic", 
+        "gemini": "Gemini",
+        "openai-compatible": "OpenAI Compatible"
+    }
+    
+    chain_names = {
+        "cronos": "Cronos",
+        "kaia": "Kaia",
+        "sui": "Sui", 
+        "aptos": "Aptos"
+    }
+    
+    content = f"""
+        <div class="terminal-header">
+            <div class="title">CREATE NEW AGENT</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="step-info">Confirm Agent Configuration</div>
+            <div class="confirm-info">
+                <div class="confirm-row">
+                    <span class="confirm-label">AI Provider:</span>
+                    <span class="confirm-value">{provider_names.get(ai_provider, ai_provider)}</span>
+                </div>
+                <div class="confirm-row">
+                    <span class="confirm-label">Trading Chain:</span>
+                    <span class="confirm-value">{chain_names.get(trading_chain, trading_chain)}</span>
+                </div>
+            </div>
+            
+            <div class="menu">
+                <div class="menu-header">Confirm Creation</div>
+                <div id="menuItems">
+                    <div class="menu-item" data-action="confirm-create">Confirm</div>
+                    <div class="menu-item" data-action="back">Back</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class CreateAgentConfirmMenu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+            case 'confirm-create':
+                window.location.href = '/create-agent/final?provider={ai_provider}&chain={trading_chain}';
+                break;
+            case 'back':
+                window.location.href = '/create-agent/step2?provider={ai_provider}';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new CreateAgentConfirmMenu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Create Agent Confirm", content, additional_css, additional_js)
 
 def interactive_mode_template() -> str:
     """Interactive mode page template"""
@@ -116,7 +579,7 @@ class InteractiveMenu extends SubMenu {{
         
         switch(action) {{
             case 'new':
-                alert('Starting new session... This would launch the trading agent interface.');
+                window.location.href = '/select-agent-for-session';
                 break;
             case 'resume':
                 alert('Resuming last session... This would restore previous trading state.');
@@ -134,6 +597,94 @@ document.addEventListener('DOMContentLoaded', () => {{
     """
     
     return base_template("TradeArena Web Terminal - Interactive Mode", content, additional_js=additional_js)
+
+def select_agent_for_session_template(agents: list = None) -> str:
+    """Select agent for session template"""
+    additional_css = """
+.agent-info {
+    font-size: 12px;
+    color: #00cc00;
+    margin-left: 10px;
+}
+.menu-item .empty-state { 
+    color: #888888 !important;
+    font-style: italic !important;
+    display: block !important;
+}
+    """
+    
+    # Generate agent menu items dynamically
+    agent_items = ""
+    if agents and len(agents) > 0:
+        for agent in agents:
+            agent_items += f"""
+                    <div class="menu-item" data-action="agent-{agent['id']}">
+                        {agent['name']} <span class="agent-info">[{agent['ai_provider'].replace('_', ' ').title()} | {agent['trading_chain'].title()}]</span>
+                    </div>
+            """
+    else:
+        agent_items = """
+                    <div class="menu-item" data-action="no-agents">
+                        <span class="empty-state" style="color: #888888 !important; font-style: italic !important; display: block !important;">No agents available. Create an agent first.</span>
+                    </div>
+        """
+    
+    content = f"""
+        <div class="terminal-header">
+            <div class="title">SELECT AGENT FOR SESSION</div>
+        </div>
+        
+        <div class="menu-container">
+            <div class="menu">
+                <div class="menu-header">Choose Agent Configuration</div>
+                <div id="menuItems">
+{agent_items}
+                    <div class="menu-item" data-action="back">Back to Interactive Mode</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
+        </div>
+    """
+    
+    # Generate dynamic JavaScript
+    agent_js_cases = ""
+    if agents and len(agents) > 0:
+        for agent in agents:
+            agent_js_cases += f"""
+            case 'agent-{agent['id']}':
+                alert('Starting new session with {agent['name']} ({agent['ai_provider'].replace('_', ' ').title()} | {agent['trading_chain'].title()})...');
+                break;
+            """
+    
+    additional_js = f"""
+{SUBMENU_JS}
+
+class SelectAgentForSessionMenu extends SubMenu {{
+    select() {{
+        const selectedItem = this.menuItems[this.selectedIndex];
+        const action = selectedItem.getAttribute('data-action');
+        
+        switch(action) {{
+{agent_js_cases}
+            case 'no-agents':
+                // Do nothing - just a placeholder
+                break;
+            case 'back':
+                window.location.href = '/interactive';
+                break;
+        }}
+    }}
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    new SelectAgentForSessionMenu();
+}});
+    """
+    
+    return base_template("TradeArena Web Terminal - Select Agent for Session", content, additional_js=additional_js)
 
 def views_page_template() -> str:
     """Views management page template"""
@@ -182,87 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {{
     """
     
     return base_template("TradeArena Web Terminal - Manage Views", content, additional_js=additional_js)
-
-def config_page_template() -> str:
-    """Configure agent page template"""
-    additional_css = """
-.status-text {
-    font-size: 12px;
-    color: #ffff00;
-}
-    """
-    
-    content = """
-        <div class="terminal-header">
-            <div class="title">CONFIGURE AGENT</div>
-        </div>
-        
-        <div class="menu-container">
-            <div class="menu">
-                <div class="menu-header">Configuration Options</div>
-                <div id="menuItems">
-                    <div class="menu-item" data-action="ai-model">
-                        AI Model <span class="status-text">[Not Configured]</span>
-                    </div>
-                    <div class="menu-item" data-action="trading-chains">
-                        Trading Chains <span class="status-text">[Cronos, KAIA]</span>
-                    </div>
-                    <div class="menu-item" data-action="risk-management">
-                        Risk Management <span class="status-text">[Enabled]</span>
-                    </div>
-                    <div class="menu-item" data-action="api-keys">
-                        API Keys <span class="status-text">[Partially Configured]</span>
-                    </div>
-                    <div class="menu-item" data-action="notifications">
-                        Notifications <span class="status-text">[Disabled]</span>
-                    </div>
-                    <div class="menu-item" data-action="back">Back to Main Menu</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="instructions">
-            Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span class="blink">_</span>
-        </div>
-    """
-    
-    additional_js = f"""
-{SUBMENU_JS}
-
-class ConfigMenu extends SubMenu {{
-    select() {{
-        const selectedItem = this.menuItems[this.selectedIndex];
-        const action = selectedItem.getAttribute('data-action');
-        
-        switch(action) {{
-            case 'ai-model':
-                alert('AI Model Configuration - This would open the AI provider setup');
-                break;
-            case 'trading-chains':
-                alert('Trading Chains Configuration - This would open chain selection');
-                break;
-            case 'risk-management':
-                alert('Risk Management Settings - This would open risk parameters');
-                break;
-            case 'api-keys':
-                alert('API Keys Configuration - This would open secure key management');
-                break;
-            case 'notifications':
-                alert('Notification Settings - This would open alert configuration');
-                break;
-            case 'back':
-                window.location.href = '/';
-                break;
-        }}
-    }}
-}}
-
-document.addEventListener('DOMContentLoaded', () => {{
-    new ConfigMenu();
-}});
-    """
-    
-    return base_template("TradeArena Web Terminal - Configure Agent", content, additional_css, additional_js)
 
 def walrus_page_template() -> str:
     """Walrus settings page template"""

@@ -97,6 +97,7 @@ body::before {
 .menu-container {
     flex: 1;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
@@ -253,8 +254,8 @@ class TerminalMenu {
             case 'views':
                 window.location.href = '/views';
                 break;
-            case 'config':
-                window.location.href = '/config';
+            case 'manage-agents':
+                window.location.href = '/manage-agents';
                 break;
             case 'walrus':
                 window.location.href = '/walrus';

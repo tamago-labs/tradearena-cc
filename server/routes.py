@@ -1,19 +1,25 @@
 """
-Route handlers for TradeArena Web Terminal
+Route handlers for TradeArena
 All API and page routes
 """
 
-from fastapi import Request
+from fastapi import Request, Query
 from fastapi.responses import HTMLResponse
 from .templates import (
     main_page_template,
     interactive_mode_template,
     views_page_template,
-    config_page_template,
     walrus_page_template,
-    logs_page_template
+    logs_page_template,
+    manage_agents_template,
+    manage_agent_template,
+    create_agent_template,
+    create_agent_step2_template,
+    create_agent_confirm_template,
+    select_agent_for_session_template
 )
 from .data import MockDataGenerator
+from .agents import agent_manager, AI_PROVIDERS, TRADING_CHAINS
 
 # Initialize data generator
 mock_data = MockDataGenerator()
@@ -24,22 +30,125 @@ def setup_routes(app):
     @app.get("/")
     async def root():
         """Main terminal interface"""
-        return HTMLResponse(main_page_template())
+        return HTMLResponse(main_page_template(agent_manager.get_agents()))
     
     @app.get("/interactive")
     async def interactive():
         """Interactive mode page"""
         return HTMLResponse(interactive_mode_template())
     
+    @app.get("/select-agent-for-session")
+    async def select_agent_for_session():
+        """Select agent for session page"""
+        return HTMLResponse(select_agent_for_session_template(agent_manager.get_agents()))
+    
     @app.get("/views")
     async def views():
         """Manage views page"""
         return HTMLResponse(views_page_template())
     
-    @app.get("/config")
-    async def config():
-        """Configure agent page"""
-        return HTMLResponse(config_page_template())
+    @app.get("/manage-agents")
+    async def manage_agents():
+        """Manage agents page"""
+        return HTMLResponse(manage_agents_template(agent_manager.get_agents()))
+    
+    @app.get("/manage-agent/{agent_id}")
+    async def manage_agent(agent_id: str):
+        """Manage individual agent page"""
+        agent_data = agent_manager.get_agent(agent_id)
+        if agent_data:
+            return HTMLResponse(manage_agent_template(agent_id, agent_data))
+        else:
+            return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Agent Not Found</title></head>
+<body>
+<script>alert('Agent not found'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+            """)
+    
+    @app.get("/create-agent")
+    async def create_agent():
+        """Create new agent page"""
+        return HTMLResponse(create_agent_template())
+    
+    @app.get("/create-agent/step2")
+    async def create_agent_step2(provider: str = Query(...)):
+        """Create agent step 2 - select trading chain"""
+        return HTMLResponse(create_agent_step2_template(provider))
+    
+    @app.get("/create-agent/confirm")
+    async def create_agent_confirm(provider: str = Query(...), chain: str = Query(...)):
+        """Create agent confirmation page"""
+        return HTMLResponse(create_agent_confirm_template(provider, chain))
+    
+    @app.get("/create-agent/final")
+    async def create_agent_final(provider: str = Query(...), chain: str = Query(...)):
+        """Finalize agent creation"""
+        try:
+            # Create the agent with UUID-based ID and descriptive name
+            new_agent = agent_manager.create_agent(
+                ai_provider=provider,
+                trading_chain=chain
+            )
+            
+            return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head><title>Agent Created</title></head>
+<body>
+<script>alert('Agent {new_agent['name']} created successfully!\\nID: {new_agent['id']}'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+            """)
+        except Exception as e:
+            return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Error creating agent: {str(e)}'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+            """)
+    
+    @app.get("/delete-agent/{agent_id}")
+    async def delete_agent(agent_id: str):
+        """Delete agent"""
+        try:
+            success = agent_manager.delete_agent(agent_id)
+            if success:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Agent Deleted</title></head>
+<body>
+<script>alert('Agent deleted successfully!'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+                """)
+            else:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Agent not found'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+                """)
+        except Exception as e:
+            return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Error deleting agent: {str(e)}'); window.location.href='/manage-agents';</script>
+</body>
+</html>
+            """)
     
     @app.get("/walrus")
     async def walrus():
@@ -147,7 +256,7 @@ def setup_routes(app):
         <div class="nav">
             <a href="/">Dashboard</a>
             <a href="/settings">Settings</a>
-            <a href="/agents">Agents</a>
+            <a href="/manage-agents">Agents</a>
         </div>
 
         <div class="section">
@@ -247,13 +356,13 @@ def setup_routes(app):
     
     @app.get("/agents")
     async def agents():
-        """Agents management page (legacy - redirected to main)"""
+        """Agents management page (legacy - redirected to manage agents)"""
         return HTMLResponse("""
 <!DOCTYPE html>
 <html>
 <head><title>Redirecting...</title></head>
 <body>
-<script>window.location.href = '/';</script>
+<script>window.location.href = '/manage-agents';</script>
 </body>
 </html>
         """)
@@ -267,7 +376,17 @@ def setup_routes(app):
     @app.get("/api/agents")
     async def get_agents():
         """Get agents list"""
-        return mock_data.get_agents()
+        return {"agents": agent_manager.get_agents()}
+    
+    @app.get("/api/ai-providers")
+    async def get_ai_providers():
+        """Get available AI providers"""
+        return {"providers": AI_PROVIDERS}
+    
+    @app.get("/api/trading-chains")
+    async def get_trading_chains():
+        """Get available trading chains"""
+        return {"chains": TRADING_CHAINS}
     
     @app.get("/api/status")
     async def get_status():

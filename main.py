@@ -26,7 +26,7 @@ def main():
     try:
         # Start web server if available
         if WEB_SERVER_AVAILABLE:
-            print("Starting TradeArena Web Terminal server...")
+            print("Starting TradeArena Terminal server...")
             success, message = start_server_thread()
             if success:
                 server_started = True
