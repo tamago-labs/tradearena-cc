@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from 'framer-motion';
-import { useState } from 'react'; 
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CustomViews = () => {
@@ -15,34 +15,34 @@ const CustomViews = () => {
             icon: "💼"
         },
         {
-            title: "Strategy Performance", 
+            title: "Strategy Performance",
             description: "Win rates, P&L charts, and detailed strategy comparisons with AI-powered performance insights.",
             badge: "Performance Metrics",
             icon: "📈"
         },
         {
             title: "Market Intelligence",
-            description: "Real-time market data feeds with AI-generated insights, trend analysis, and opportunity detection.", 
+            description: "Real-time market data feeds with AI-generated insights, trend analysis, and opportunity detection.",
             badge: "Market Analysis",
             icon: "🧠"
         },
         {
             title: "Risk Analysis",
             description: "Exposure metrics, volatility indicators, and stress testing to keep your trading strategy within risk limits.",
-            badge: "Risk Management", 
+            badge: "Risk Management",
             icon: "🛡️"
         },
         {
             title: "Custom Analytics",
             description: "Any visualization you can describe - let your AI agent create personalized charts and analytics unique to your needs.",
-            badge: "Unlimited Views", 
+            badge: "Unlimited Views",
             icon: "🎨"
         }
     ];
 
 
     return (
-        <section 
+        <section
             className="py-20 px-6 bg-black/40"
         >
             <div className="max-w-6xl mx-auto">
@@ -72,7 +72,7 @@ const CustomViews = () => {
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        Once an AI provider is configured, agent can generate custom HTML interfaces to visualize trades, reasoning, and performance.
+                        Once your AI model is configured, the agent can generate its own HTML views to visualize trades, reasoning, and performance in real time.
                     </motion.p>
                 </motion.div>
 
@@ -111,8 +111,8 @@ const CustomViews = () => {
                             {/* Screenshot */}
                             <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900" style={{ minHeight: '300px' }}>
                                 <div className="relative w-full h-[300px]">
-                                    <img 
-                                        src="/screenshot-1.png" 
+                                    <img
+                                        src="/screenshot-1.png"
                                         alt={dashboardTypes[activeTab].title}
                                         className="absolute inset-0 w-full h-full object-cover"
                                         style={{ display: 'block' }}
@@ -136,7 +136,7 @@ const CustomViews = () => {
                                         {dashboardTypes[activeTab].title}
                                     </h3>
                                 </div>
-                                
+
                                 <p className="text-gray-300 leading-relaxed text-lg">
                                     {dashboardTypes[activeTab].description}
                                 </p>
@@ -155,11 +155,10 @@ const CustomViews = () => {
                             <button
                                 key={index}
                                 onClick={() => setActiveTab(index)}
-                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                    index === activeTab
-                                        ? 'bg-green-400 w-8'
-                                        : 'bg-gray-600 hover:bg-gray-500'
-                                }`}
+                                className={`w-2 h-2 rounded-full transition-all duration-300 ${index === activeTab
+                                    ? 'bg-green-400 w-8'
+                                    : 'bg-gray-600 hover:bg-gray-500'
+                                    }`}
                                 aria-label={`Go to view ${index + 1}`}
                             />
                         ))}

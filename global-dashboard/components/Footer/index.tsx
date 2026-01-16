@@ -20,6 +20,14 @@ export default function Footer() {
                         >
                             GitHub
                         </Link>
+                        <Link 
+                            href="https://docs.tamagolabs.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                        >
+                            Docs
+                        </Link>
                     </div>
                 </div> 
             </div>

@@ -1,16 +1,21 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Terminal, Play, Pause, RotateCcw } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 
 const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStart?: boolean; embedded?: boolean }) => {
-    const [currentCommand, setCurrentCommand] = useState('');
-    const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [currentStep, setCurrentStep] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
-    const [playbackSpeed, setPlaybackSpeed] = useState(1);
+    // const [currentStep, setCurrentStep] = useState(0);
+    const [terminalState, setTerminalState] = useState({
+        screen: 'main',
+        selectedItem: 0,
+        messages: [] as string[],
+        userInput: '',
+        processing: false
+    });
+    
     const terminalRef = useRef<HTMLDivElement>(null);
     const demoControllerRef = useRef<{
         shouldStop: boolean;
@@ -22,125 +27,74 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
         resume: () => {}
     });
 
-    const commands = [
+
+    const mainMenuItems = [
+        'Interactive Mode',
+        'Manage Views', 
+        'Configure Agent',
+        'Walrus Settings',
+        'Agent Logs'
+    ];
+
+    const interactiveMenuItems = [
+        'Start New Session',
+        'Resume Last Session', 
+        'Back to Main Menu'
+    ];
+
+    const demoSteps = [
         {
-            command: 'npm install tradearena-cli',
-            output: [
-                'npm WARN deprecated package@1.0.0',
-                'added 152 packages in 3.2s',
-                '',
-                '✓ TradeArena CLI installed successfully'
-            ],
+            type: 'show_main_menu',
             delay: 2000
         },
         {
-            command: 'tradearena init',
-            output: [
-                'Initializing TradeArena configuration...',
-                '┌─────────────────────────────────────┐',
-                '│  TradeArena Configuration Setup     │',
-                '└─────────────────────────────────────┘',
-                '',
-                '✓ Created .tradearena directory',
-                '✓ Generated wallet configuration',
-                '✓ Connected to Sui testnet',
-                '✓ Initialized Walrus storage client',
-                '',
-                'Your TradeArena is ready to use!'
-            ],
+            type: 'navigate_to_interactive',
+            delay: 1000
+        },
+        {
+            type: 'select_interactive',
+            delay: 500
+        },
+        {
+            type: 'show_interactive_menu',
+            delay: 1000
+        },
+        {
+            type: 'start_new_session',
+            delay: 500
+        },
+        {
+            type: 'show_ai_chat',
+            delay: 1000
+        },
+        {
+            type: 'user_input',
+            input: 'help maximise my 50 USDT',
+            delay: 2000
+        },
+        {
+            type: 'ai_response',
             delay: 3000
         },
         {
-            command: 'tradearena deploy --model gpt-5 --strategy aggressive',
-            output: [
-                'Deploying AI agent with GPT-5 model...',
-                '',
-                '┌─ Agent Configuration ─────────────────┐',
-                '│ Model:         GPT-5                   │',
-                '│ Strategy:      Aggressive              │',
-                '│ Capital:       1000 USDC              │',
-                '│ Risk Level:    High                   │',
-                '└─────────────────────────────────────┘',
-                '',
-                'Executing deployment transaction...',
-                'Transaction: 0x7f9a2b3c4d5e6f8a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5',
-                'Status: ✓ Confirmed',
-                '',
-                '🤖 Agent deployed successfully!',
-                '📍 Agent ID: agent_0x1234...5678',
-                '🏷️  Model: GPT-5',
-                '💰 Initial Capital: 1000 USDC',
-                '',
-                'Your agent is now competing in the arena!'
-            ],
-            delay: 4000
+            type: 'user_input',
+            input: 'go for option 2',
+            delay: 2000
         },
         {
-            command: 'tradearena watch',
-            output: [
-                '📡 Connecting to TradeArena live feed...',
-                '',
-                '┌─ Live Arena Monitor ─────────────────┐',
-                '│                                    │',
-                '│ Your Agent: agent_0x1234...5678     │',
-                '│ Model: GPT-5                        │',
-                '│ Current PnL: +5.7%                  │',
-                '│ Active Trades: 3                    │',
-                '│                                    │',
-                '│ 🟢 EXECUTE: Buy SUI @ 1.24         │',
-                '│ Reason: Momentum breakout detected   │',
-                '│ Recorded: TX#1247                  │',
-                '│                                    │',
-                '│ 🟢 EXECUTE: Sell USDC @ 0.998      │',
-                '│ Reason: Rebalancing portfolio       │',
-                '│ Recorded: TX#1248                  │',
-                '│                                    │',
-                '│ ⏳ PENDING: Market analysis         │',
-                '│ ETA: 12 seconds                   │',
-                '│                                    │',
-                '└─────────────────────────────────────┘',
-                '',
-                'Press Ctrl+C to stop monitoring...'
-            ],
-            delay: 5000
+            type: 'ai_response',
+            input: 'go for option 2',
+            delay: 6000
         },
         {
-            command: 'tradearena verify --tx 0x7f9a2b3c4d5e6f8a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5',
-            output: [
-                '🔍 Verifying transaction on Walrus...',
-                '',
-                '┌─ Transaction Verification ────────────┐',
-                '│                                    │',
-                '│ Transaction ID:                       │',
-                '│ 0x7f9a...f4a5                       │',
-                '│                                    │',
-                '│ 📊 Agent Decision Data:               │',
-                '│ • Market Analysis: 15 indicators      │',
-                '│ • Risk Assessment: Moderate           │',
-                '│ • Confidence Score: 87%              │',
-                '│ • Execution Time: 1.2s              │',
-                '│                                    │',
-                '│ 🔗 Walrus Storage:                   │',
-                '│ • Blob ID: blob_abc123...def456     │',
-                '│ • Size: 2.4 KB                      │',
-                '│ • Timestamp: 2025-01-15 14:32:18    │',
-                '│ • Merkle Root: verified              │',
-                '│                                    │',
-                '│ ✅ VERIFICATION: SUCCESS              │',
-                '│ All data is permanently recorded     │',
-                '│ and cryptographically verifiable     │',
-                '│                                    │',
-                '└─────────────────────────────────────┘'
-            ],
+            type: 'execution_result',
+            delay: 2000
+        },
+        {
+            type: 'demo_complete',
             delay: 4000
         }
     ];
-
-    useEffect(() => {
-        if (terminalRef.current) {
-            terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-        }
-    }, [commandHistory]);
 
     useEffect(() => {
         if (autoStart && !isPlaying) {
@@ -153,8 +107,20 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
         };
     }, [autoStart]);
 
+    // Auto-scroll to bottom when terminal state changes
+    useEffect(() => {
+        if (terminalRef.current) {
+            setTimeout(() => {
+                terminalRef.current?.scrollTo({
+                    top: terminalRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+    }, [terminalState]);
+
     const sleep = (ms: number) => {
-        return new Promise(resolve => setTimeout(resolve, ms / playbackSpeed));
+        return new Promise(resolve => setTimeout(resolve, ms));
     };
 
     const waitForResume = () => {
@@ -171,36 +137,15 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
     };
 
     const runDemo = async () => {
-        setIsPlaying(true);
-        setIsPaused(false);
-        setCommandHistory([]);
-        setCurrentStep(0);
-        demoControllerRef.current.shouldStop = false;
-        demoControllerRef.current.shouldPause = false;
+        const startDemo = async () => {
+            setIsPlaying(true);
+            setIsPaused(false);
+            // setCurrentStep(0);
+            demoControllerRef.current.shouldStop = false;
+            demoControllerRef.current.shouldPause = false;
 
-        try {
-            for (let i = 0; i < commands.length; i++) {
-                if (demoControllerRef.current.shouldStop) break;
-                
-                if (demoControllerRef.current.shouldPause) {
-                    await waitForResume();
-                }
-                
-                if (demoControllerRef.current.shouldStop) break;
-
-                setCurrentStep(i);
-                const cmd = commands[i];
-                
-                // Add command to history
-                setCommandHistory(prev => [...prev, `$ ${cmd.command}`]);
-                
-                // Wait a bit before showing output
-                await sleep(500);
-                
-                if (demoControllerRef.current.shouldStop) break;
-
-                // Add output line by line
-                for (const line of cmd.output) {
+            try {
+                for (let i = 0; i < demoSteps.length; i++) {
                     if (demoControllerRef.current.shouldStop) break;
                     
                     if (demoControllerRef.current.shouldPause) {
@@ -209,58 +154,241 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
                     
                     if (demoControllerRef.current.shouldStop) break;
 
-                    setCommandHistory(prev => [...prev, line]);
-                    await sleep(100);
+                    // setCurrentStep(i);
+                    const step = demoSteps[i];
+                    
+                    // Execute step based on type
+                    switch (step.type) {
+                        case 'show_main_menu':
+                            setTerminalState({
+                                screen: 'main',
+                                selectedItem: 0,
+                                messages: [],
+                                userInput: '',
+                                processing: false
+                            });
+                            break;
+                            
+                        case 'navigate_to_interactive':
+                            // Simulate arrow key navigation
+                            for (let j = 0; j <= 0; j++) {
+                                setTerminalState(prev => ({ ...prev, selectedItem: j }));
+                                await sleep(300);
+                            }
+                            break;
+                            
+                        case 'select_interactive':
+                            await sleep(500);
+                            break;
+                            
+                        case 'show_interactive_menu':
+                            setTerminalState({
+                                screen: 'interactive',
+                                selectedItem: 0,
+                                messages: [],
+                                userInput: '',
+                                processing: false
+                            });
+                            break;
+                            
+                        case 'start_new_session':
+                            setTerminalState(prev => ({ ...prev, selectedItem: 0 }));
+                            await sleep(500);
+                            break;
+                            
+                        case 'show_ai_chat':
+                            setTerminalState({
+                                screen: 'chat',
+                                selectedItem: 0,
+                                messages: ['AI Agent Initialized', 'Portfolio: 50 USDT', 'Network: KAIA', '', 'Agent: Ready for commands'],
+                                userInput: '',
+                                processing: false
+                            });
+                            break;
+                            
+                        case 'user_input':
+                            setTerminalState(prev => ({ ...prev, userInput: '', processing: true }));
+                            // Simulate typing
+                            for (let char of step.input!) {
+                                setTerminalState(prev => ({ ...prev, userInput: prev.userInput + char }));
+                                await sleep(50);
+                            }
+                            setTerminalState(prev => ({ 
+                                ...prev, 
+                                messages: [...prev.messages, `> ${prev.userInput}`],
+                                userInput: '',
+                                processing: false
+                            }));
+                            break;
+                            
+                        case 'ai_response':
+                            const response = step.input === 'go for option 2' ? [
+                                'Agent: Executing Leverage Strategy...',
+                                '',
+                                '⚡ Initiating transactions...',
+                                '',
+                                '✅ Supply Transaction: 0x7f9a2b3c4d5e6f8a1b2c3d4e5f6a7b8c9',
+                                '   • 50 USDT supplied to KiloLend',
+                                '   • Collateral value: 50 USDT',
+                                '',
+                                '✅ Borrow Transaction: 0x9b8c3d2e1f5a6b7c8d9e0f1a2b3c4d5e6',
+                                '   • Borrowed: 25 KAIA (current price: $0.85)',
+                                '   • Current Health Factor: 1.5',
+                                '',
+                                '📈 Position Summary:',
+                                '• Total Supply: 50 USDT',
+                                '• Total Borrow: 21.25 USDT (25 KAIA)',
+                                '• Health Factor: 1.5 (Safe range: >1.2)',
+                                '• Estimated APY: 9.8%',
+                                '',
+                                '🔄 Strategy Active - Monitoring market conditions...'
+                            ] : [
+                                '🤖 Analyzing opportunities on KAIA network...',
+                                '📊 Current KiloLend APY: 3.14%',
+                                '🔍 Market conditions: Optimal for leverage',
+                                '',
+                                'I recommend 2 strategies:',
+                                '',
+                                '1️⃣  **Safe Play** - Supply to KiloLend',
+                                '   • APY: 3.14%',
+                                '   • Risk: Minimal',
+                                '   • Expected return: 51.57 USDT/year',
+                                '',
+                                '2️⃣  **Leverage Play** - Supply + Borrow',
+                                '   • Supply: 50 USDT → KiloLend',
+                                '   • Borrow: 25 KAIA (50% LTV)',
+                                '   • Stake borrowed KAIA for yield',
+                                '   • Risk: Moderate (HF: 1.5)',
+                                '   • Expected return: ~8-12% APY',
+                                '',
+                                'Choose your strategy (1 or 2):'
+                            ];
+                            
+                            setTerminalState(prev => ({ ...prev, messages: [...prev.messages, ...response] }));
+                            break;
+                            
+                        case 'execution_result':
+                            // Execution already handled in ai_response
+                            break;
+                            
+                        case 'demo_complete':
+                            setTerminalState(prev => ({ 
+                                ...prev, 
+                                messages: [...prev.messages, '', '✨ Demo Complete! Try the live terminal above to execute real strategies.']
+                            }));
+                            break;
+                    }
+                    
+                    if (demoControllerRef.current.shouldStop) break;
+                    
+                    // Wait before next step
+                    await sleep(step.delay);
                 }
+            } catch (error) {
+                console.error('Demo execution error:', error);
+            } finally {
+                setIsPlaying(false);
+                setIsPaused(false);
                 
-                if (demoControllerRef.current.shouldStop) break;
-                
-                // Add empty line
-                setCommandHistory(prev => [...prev, '']);
-                
-                // Wait before next command
-                await sleep(cmd.delay);
+                // Auto-restart after 4 seconds if not stopped
+                if (!demoControllerRef.current.shouldStop) {
+                    await sleep(4000);
+                    if (!demoControllerRef.current.shouldStop) {
+                        startDemo();
+                    }
+                }
             }
-        } catch (error) {
-            console.error('Demo execution error:', error);
-        } finally {
-            setIsPlaying(false);
-            setIsPaused(false);
+        };
+
+        startDemo();
+    };
+ 
+ 
+ 
+
+    // Render terminal content based on current state
+    const renderTerminalContent = () => {
+        const { screen, selectedItem, messages, userInput, processing } = terminalState;
+
+        if (screen === 'main') {
+            return (
+                <div className="text-green-400">
+                    <div className="text-center mb-4">TRADEARENA TERMINAL</div>
+                    <div className="text-center mb-6 text-green-300">v1.0.0</div>
+                    <div className="space-y-1">
+                        {mainMenuItems.map((item, index) => (
+                            <div key={index} className={index === selectedItem ? 'bg-green-400 text-black px-2' : ''}>
+                                {index === selectedItem ? '●' : '  '} {item}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 text-green-300 text-xs">
+                        Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span className="animate-pulse">_</span>
+                    </div>
+                </div>
+            );
         }
-    };
 
-    const pauseDemo = () => {
-        setIsPaused(true);
-        demoControllerRef.current.shouldPause = true;
-    };
-
-    const resumeDemo = () => {
-        setIsPaused(false);
-        demoControllerRef.current.shouldPause = false;
-    };
-
-    const stopDemo = () => {
-        demoControllerRef.current.shouldStop = true;
-        setIsPlaying(false);
-        setIsPaused(false);
-    };
-
-    const resetDemo = () => {
-        stopDemo();
-        setCommandHistory([]);
-        setCurrentStep(0);
-    };
-
-    const togglePlayPause = () => {
-        if (isPlaying) {
-            if (isPaused) {
-                resumeDemo();
-            } else {
-                pauseDemo();
-            }
-        } else {
-            runDemo();
+        if (screen === 'interactive') {
+            return (
+                <div className="text-green-400">
+                    <div className="text-center mb-2">INTERACTIVE MODE</div>
+                    <div className="text-center mb-6 text-green-300">SELECT SESSION TYPE</div>
+                    <div className="space-y-1">
+                        {interactiveMenuItems.map((item, index) => (
+                            <div key={index} className={index === selectedItem ? 'bg-green-400 text-black px-2' : ''}>
+                                {index === selectedItem ? '●' : '  '} {item}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 text-green-300 text-xs">
+                        Use ↑↓ arrows to navigate • Enter to select • Escape to go back • <span className="animate-pulse">_</span>
+                    </div>
+                </div>
+            );
         }
+
+        if (screen === 'chat') {
+            return (
+                <div className="text-green-400">
+                    <div className="space-y-1">
+                        {messages.map((message, index) => (
+                            <div key={index} className={
+                                message.includes('✅') || message.includes('⚡') ? 'text-green-400' :
+                                message.includes('🤖') || message.includes('📊') || message.includes('🔍') ? 'text-blue-400' :
+                                message.includes('📈') || message.includes('💰') || message.includes('🔄') ? 'text-yellow-400' :
+                                message.includes('Agent:') || message.includes('Portfolio:') || message.includes('Network:') ? 'text-green-300' :
+                                message.startsWith('>') ? 'text-green-400' :
+                                'text-gray-300'
+                            }>
+                                {message}
+                            </div>
+                        ))}
+                    </div>
+                    {processing && (
+                        <div className="flex items-center gap-2 mt-2">
+                            <div className="text-green-400"> {userInput}</div>
+                            <span className="animate-pulse">_</span>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-gray-500">
+                <p>Welcome to TradeArena Terminal!</p>
+                <p>Click "Run Demo" to see how our AI agents execute DeFi strategies.</p>
+                <p className="mt-2">Features:</p>
+                <ul className="ml-4 mt-1 space-y-1">
+                    <li>• AI-powered DeFi strategy execution</li>
+                    <li>• Real-time portfolio management</li>
+                    <li>• Multi-chain support (KAIA, Cronos, Sui, Aptos)</li>
+                    <li>• Leveraged yield farming strategies</li>
+                    <li>• On-chain transaction verification</li>
+                </ul>
+            </div>
+        );
     };
 
     return (
@@ -307,94 +435,34 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
                         <div className="bg-gray-900 px-4 py-3 flex items-center justify-between border-b border-gray-800">
                             <div className="flex items-center gap-3">
                                 <Terminal className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-300 font-mono text-sm">TradeArena CLI</span>
+                                <span className="text-gray-300 font-mono text-sm">TradeArena Terminal</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <select
-                                    value={playbackSpeed}
-                                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                                    className="px-2 py-1 bg-gray-800 text-gray-300 rounded text-xs border border-gray-700"
-                                    disabled={isPlaying}
+                            {isPlaying && (
+                                <motion.div
+                                    className="flex items-center gap-2"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
                                 >
-                                    <option value={0.5}>0.5x</option>
-                                    <option value={1}>1x</option>
-                                    <option value={1.5}>1.5x</option>
-                                    <option value={2}>2x</option>
-                                </select>
-                                <button
-                                    onClick={togglePlayPause}
-                                    className="px-3 py-1 bg-[#00ff88]/20 text-[#00ff88] rounded hover:bg-[#00ff88]/30 transition-colors flex items-center gap-2 text-sm"
-                                    aria-label={isPlaying ? (isPaused ? "Resume" : "Pause") : "Run Demo"}
-                                >
-                                    {isPlaying ? (
-                                        isPaused ? (
-                                            <>
-                                                <Play className="w-3 h-3" />
-                                                Resume
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Pause className="w-3 h-3" />
-                                                Pause
-                                            </>
-                                        )
-                                    ) : (
-                                        <>
-                                            <Play className="w-3 h-3" />
-                                            Run Demo
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={resetDemo}
-                                    className="px-3 py-1 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors flex items-center gap-2 text-sm"
-                                    aria-label="Reset"
-                                >
-                                    <RotateCcw className="w-3 h-3" />
-                                    Reset
-                                </button>
-                            </div>
+                                    <motion.div
+                                        className="w-2 h-2 rounded-full bg-[#00ff88]"
+                                        animate={{ scale: [1, 1.5, 1] }}
+                                        transition={{ duration: 1, repeat: Infinity }}
+                                    />
+                                    <span className="text-gray-400 text-xs">AI Demo</span>
+                                </motion.div>
+                            )}
                         </div>
 
                         {/* Terminal Content */}
                         <div
                             ref={terminalRef}
-                            className="p-4 h-96 overflow-y-auto font-mono text-sm"
+                            className="p-4 h-[28rem] overflow-y-auto font-mono text-sm"
                             style={{ backgroundColor: '#0a0a0f' }}
                             role="log"
                             aria-live="polite"
                             aria-label="Terminal output"
                         >
-                            {commandHistory.length === 0 && !isPlaying && (
-                                <div className="text-gray-500">
-                                    <p>Welcome to TradeArena CLI!</p>
-                                    <p>Click "Run Demo" to see how easy it is to deploy your AI agent.</p>
-                                    <p className="mt-2">Available commands:</p>
-                                    <ul className="ml-4 mt-1 space-y-1">
-                                        <li>• npm install tradearena-cli</li>
-                                        <li>• tradearena init</li>
-                                        <li>• tradearena deploy --model {'<model>'}</li>
-                                        <li>• tradearena watch</li>
-                                        <li>• tradearena verify --tx {'<hash>'}</li>
-                                    </ul>
-                                </div>
-                            )}
-
-                            {commandHistory.map((line, index) => (
-                                <motion.div
-                                    key={`${index}-${line}`}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.05 }}
-                                    className={`${line.startsWith('$') ? 'text-[#00ff88]' : 
-                                              line.includes('✓') || line.includes('✅') ? 'text-green-400' :
-                                              line.includes('🤖') || line.includes('📡') || line.includes('🔍') ? 'text-blue-400' :
-                                              line.includes('🟢') || line.includes('⏳') ? 'text-yellow-400' :
-                                              'text-gray-300'}`}
-                                >
-                                    {line}
-                                </motion.div>
-                            ))}
+                            {renderTerminalContent()}
 
                             {/* Progress Indicator */}
                             {isPlaying && (

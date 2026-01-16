@@ -78,7 +78,7 @@ const Hero = () => {
                                 transition={{ delay: 0.4 }}
                                 className="text-[17px] text-gray-400 leading-relaxed"
                             >
-                                Trade DeFi with AI agents on auto-pilot — executing real on-chain strategies, generating their own views, and sharing decisions via Walrus to improve collective trading intelligence.
+                                Trade DeFi with AI agents on auto-pilot — executing real on-chain strategies, generating views, and sharing decisions via Walrus to improve collective trading intelligence.
                             </motion.p>
                         </div>
 
@@ -89,10 +89,12 @@ const Hero = () => {
                             className="flex flex-col sm:flex-row gap-4"
                         >
                             <Link
-                                href="/season"
+                                href="http://localhost:8000"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="px-8 py-4 bg-gradient-to-r from-[#00ff88] to-[#00d4ff] text-black font-bold rounded-lg hover:shadow-lg hover:shadow-[#00ff88]/50 transition-all flex items-center justify-center group"
                             >
-                                Start Trading
+                                Try Live Terminal
                                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link
@@ -122,7 +124,7 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Cronos
+                                        Cronos Mainnet
                                     </span>
                                 </div>
                                 <div className="group relative">
@@ -134,7 +136,7 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Kaia
+                                        Kaia Mainnet
                                     </span>
                                 </div>
                                 <div className="group relative">
@@ -146,10 +148,10 @@ const Hero = () => {
                                         className="w-8 h-8 transition-transform group-hover:scale-110"
                                     />
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Sui
+                                        Sui Mainnet
                                     </span>
                                 </div>
-                                <div className="group relative">
+                                {/* <div className="group relative">
                                     <Image
                                         src="/aptos-icon.png"
                                         alt="Aptos"
@@ -160,7 +162,7 @@ const Hero = () => {
                                     <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                                         Aptos
                                     </span>
-                                </div>
+                                </div> */}
                             </div>
                         </motion.div>
                     </motion.div>

@@ -6,15 +6,15 @@ const HowItWorks = () => {
     const steps = [
         {
             title: "Configure Your Agent",
-            description: "Set up your AI trading environment locally with secure configuration for your models"
+            description: "Choose your AI model, tools, and optional storage. Agents execute on-chain securely via local MCP"
         },
         {
-            title: "Build Your Own View",
-            description: "Visualize trades, reasoning, benchmarks, or anything — designed by your agent, for your strategy"
+            title: "Build the View",
+            description: "Let your agent create custom dashboards to visualize trades, reasoning, and performance"
         },
         {
-            title: "Start AI Trading",
-            description: "Launch AI trading with scheduled triggers and share context with others to improve strategies"
+            title: "Run & Compare",
+            description: "Execute strategies automatically and share results to benchmark against other agents"
         }
     ];
 
@@ -47,7 +47,7 @@ const HowItWorks = () => {
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        Configure your AI trading agent locally and start automated DeFi trading with persistent memory and real-time optimization.
+                        Spin up your AI trading agent, execute real DeFi strategies, and generate custom views with shared, verifiable context.
                     </motion.p>
                 </motion.div>
 
@@ -72,6 +72,21 @@ const HowItWorks = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* AI Providers Section */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="text-center mt-12"
+                >
+                    <p className="text-gray-300 text-sm">
+                        Supporting major AI providers: AWS Bedrock • Anthropic • Gemini • OpenAI Compatible
+                    </p>
+                    <p className="text-gray-500 text-xs mt-2">
+                        Including Claude Sonnet, Opus, AWS Nova Pro, Gemini 2.5 Flash, GPT-5, GLM-4.6, DeepSeek-R1
+                    </p>
+                </motion.div>
             </div>
         </section>
     );
