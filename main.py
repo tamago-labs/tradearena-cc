@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-TradeArena CLI - The Vibe Trading Arena for DeFi
+TradeArena Web Terminal - The Vibe Trading Arena for DeFi
 
-This is the main entry point for the TradeArena CLI application.
-It provides a rich, interactive interface for managing AI trading agents,
+This is the main entry point for the TradeArena Web Terminal application.
+It provides a retro terminal-style web interface for managing AI trading agents,
 configuring strategies, monitoring performance, and managing decentralized storage.
 """
 
@@ -12,11 +12,6 @@ import os
 import threading
 import time
 from pathlib import Path
-from cli import MenuSystem
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.align import Align
 
 # Import server functionality
 try:
@@ -26,56 +21,43 @@ except ImportError:
     WEB_SERVER_AVAILABLE = False
 
 def main():
-    """Main entry point for TradeArena CLI"""
+    """Main entry point for TradeArena Web Terminal"""
     server_started = False
     try:
         # Start web server if available
         if WEB_SERVER_AVAILABLE:
-            console = Console()
-            console.print("[dim]Starting web interface server...[/dim]")
+            print("Starting TradeArena Web Terminal server...")
             success, message = start_server_thread()
             if success:
                 server_started = True
-                console.print(f"[bold green]✓ {message}[/bold green]")
-                console.print("[dim]Web interface is now available in the background[/dim]")
+                print(f"✓ {message}")
+                print(f"🌐 Web Terminal is now available at: {message}")
+                print("📝 Open your browser and navigate to the URL above")
+                print("🎮 Use arrow keys to navigate, Enter to select, Escape to go back")
+                print("⏹️  Press Ctrl+C here to stop the server")
             else:
-                console.print(f"[bold yellow]⚠ {message}[/bold yellow]")
+                print(f"⚠ {message}")
+                sys.exit(1)
+        else:
+            print("❌ Web server not available. Please install required dependencies.")
+            print("Run: pip install fastapi uvicorn[standard]")
+            sys.exit(1)
         
-        # Initialize menu system
-        menu = MenuSystem()
-        
-        # Display welcome message
-        welcome_text = Text.from_markup(
-            "[bold blue]🚀 Welcome to TradeArena CLI[/bold blue]\n\n"
-            "[dim]The Vibe Trading Arena for DeFi[/dim]\n\n"
-            "[dim]Starting your AI trading agent management system...[/dim]"
-        )
-        
-        welcome_panel = Panel(
-            welcome_text,
-            border_style="green",
-            padding=(1, 2)
-        )
-        
-        console = Console()
-        console.print(welcome_panel)
-        
-        # Start the main menu loop
-        menu.run(server_started)
+        # Keep the main thread alive
+        while True:
+            time.sleep(1)
         
     except KeyboardInterrupt:
-        console = Console()
-        console.print("\n[bold yellow]👋 Goodbye! Thanks for using TradeArena CLI.[/bold yellow]")
+        print("\n👋 Goodbye! Thanks for using TradeArena Web Terminal.")
         
         # Stop web server if it was started
         if server_started and WEB_SERVER_AVAILABLE:
             stop_server()
-            console.print("[dim]Web interface server stopped.[/dim]")
+            print("Web Terminal server stopped.")
             
     except Exception as e:
-        console = Console()
-        console.print(f"\n[bold red]❌ An error occurred: {e}[/bold red]")
-        console.print("[dim]Please check your configuration and try again.[/dim]")
+        print(f"\n❌ An error occurred: {e}")
+        print("Please check your configuration and try again.")
         
         # Stop web server on error
         if server_started and WEB_SERVER_AVAILABLE:
