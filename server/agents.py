@@ -53,7 +53,7 @@ class AgentManager:
                 return agent
         return None
     
-    def create_agent(self, name: str = None, ai_provider: str = None, trading_chain: str = None) -> Dict[str, Any]:
+    def create_agent(self, name: str = None, ai_provider: str = None, trading_chain: str = None, config: Dict[str, Any] = None) -> Dict[str, Any]:
         """Create new agent with UUID-based ID and descriptive name"""
         # Generate UUID-based ID
         new_id = f"agent_{uuid.uuid4().hex[:8]}"
@@ -70,6 +70,10 @@ class AgentManager:
             "ai_provider": ai_provider,
             "trading_chain": trading_chain
         }
+        
+        # Add configuration if provided
+        if config:
+            new_agent["config"] = config
         
         self.agents.append(new_agent)
         self.save_agents(self.agents)
@@ -116,3 +120,44 @@ TRADING_CHAINS = [
     {"id": "sui", "name": "Sui"},
     {"id": "aptos", "name": "Aptos"}
 ]
+
+# Provider configuration specifications
+PROVIDER_CONFIGS = {
+    "amazon_bedrock": {
+        "fields": ["model_id", "region_name"],
+        "defaults": {
+            "model_id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "region_name": "us-east-1"
+        },
+        "credentials_type": "aws_env",
+        "display_name": "Amazon Bedrock"
+    },
+    "anthropic": {
+        "fields": ["api_key", "model_id"],
+        "defaults": {
+            "model_id": "claude-sonnet-4-5-20250929"
+        },
+        "credentials_type": "api_key",
+        "display_name": "Anthropic"
+    },
+    "gemini": {
+        "fields": ["api_key", "model_id"],
+        "defaults": {
+            "model_id": "gemini-2.5-flash"
+        },
+        "credentials_type": "api_key",
+        "display_name": "Gemini"
+    },
+    "openai_compatible": {
+        "fields": ["api_key", "base_url", "model_id"],
+        "defaults": {
+            "model_id": "gpt-4o",
+            "base_url": ""
+        },
+        "credentials_type": "api_key",
+        "display_name": "OpenAI Compatible",
+        "placeholders": {
+            "base_url": "Leave blank for OpenAI server"
+        }
+    }
+}
