@@ -13,6 +13,9 @@ import logging
 import boto3
 from strands import Agent
 from strands.models import BedrockModel
+from strands.models.anthropic import AnthropicModel
+from strands.models.gemini import GeminiModel
+from strands.models.openai import OpenAIModel
 from strands.session.file_session_manager import FileSessionManager
 from .templates import (
     main_page_template,
@@ -66,35 +69,193 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         storage_dir=sessions_dir
     )
     
+    # Create sanitized agent state (no sensitive data in session state)
+    sanitized_config = {}
+    sensitive_fields = ['api_key', 'region_name', 'base_url']
+    for key, value in config.items():
+        if key not in sensitive_fields:
+            sanitized_config[key] = value
+    
+    agent_state = {
+        "agent_config": {
+            "id": agent_id,
+            "name": agent_data.get('name', 'Unknown Agent'),
+            "ai_provider": ai_provider,
+            "trading_chain": agent_data.get('trading_chain', 'unknown'),
+            "config": sanitized_config
+        }
+    }
+    
     # Initialize agent based on provider
     if ai_provider == "amazon-bedrock":
         model_id = config.get('model_id', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0')
         region_name = config.get('region_name', 'us-east-1')
         
-        # Create boto3 session
         boto_session = boto3.Session(region_name=region_name)
+        model = BedrockModel(model_id=model_id, boto_session=boto_session)
         
-        # Initialize Bedrock model
-        model = BedrockModel(
-            model_id=model_id,
-            boto_session=boto_session
-        )
-        
-        # Create agent without tools as specified
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[],  # No tools as requested
+            tools=[],
             model=model,
             session_manager=session_manager,
-            callback_handler=None  # No callback handler for streaming
+            callback_handler=None,
+            state=agent_state
         )
         
         logger.info(f"Initialized Amazon Bedrock agent: {model_id} in {region_name}")
         return trading_agent, session_id
     
+    elif ai_provider == "anthropic":
+        api_key = config.get('api_key')
+        if not api_key:
+            raise ValueError("API key is required for Anthropic provider")
+        
+        model_id = config.get('model_id', 'claude-sonnet-4-5-20250929')
+        max_tokens = config.get('max_tokens', 4096)
+        
+        model = AnthropicModel(
+            client_args={"api_key": api_key},
+            model_id=model_id,
+            max_tokens=max_tokens
+        )
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=[],
+            model=model,
+            session_manager=session_manager,
+            callback_handler=None,
+            state=agent_state
+        )
+        
+        logger.info(f"Initialized Anthropic agent: {model_id}")
+        return trading_agent, session_id
+    
+    elif ai_provider == "gemini":
+        api_key = config.get('api_key')
+        if not api_key:
+            raise ValueError("API key is required for Gemini provider")
+        
+        model_id = config.get('model_id', 'gemini-2.5-flash')
+        max_output_tokens = config.get('max_output_tokens', 2048)
+        temperature = config.get('temperature', 0.7)
+        top_p = config.get('top_p', 0.9)
+        top_k = config.get('top_k', 40)
+        
+        model = GeminiModel(
+            client_args={"api_key": api_key},
+            model_id=model_id,
+            params={
+                "temperature": temperature,
+                "max_output_tokens": max_output_tokens,
+                "top_p": top_p,
+                "top_k": top_k
+            }
+        )
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=[],
+            model=model,
+            session_manager=session_manager,
+            callback_handler=None,
+            state=agent_state
+        )
+        
+        logger.info(f"Initialized Gemini agent: {model_id}")
+        return trading_agent, session_id
+    
+    elif ai_provider == "openai-compatible":
+        api_key = config.get('api_key')
+        if not api_key:
+            raise ValueError("API key is required for OpenAI Compatible provider")
+        
+        model_id = config.get('model_id', 'gpt-4o')
+        base_url = config.get('base_url')
+        max_tokens = config.get('max_tokens', 4000)
+        temperature = config.get('temperature', 0.7)
+        
+        client_args = {"api_key": api_key}
+        if base_url:
+            client_args["base_url"] = base_url
+        
+        model = OpenAIModel(
+            client_args=client_args,
+            model_id=model_id,
+            params={
+                "max_tokens": max_tokens,
+                "temperature": temperature
+            }
+        )
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=[],
+            model=model,
+            session_manager=session_manager,
+            callback_handler=None,
+            state=agent_state
+        )
+        
+        logger.info(f"Initialized OpenAI Compatible agent: {model_id} (base_url: {base_url or 'default'})")
+        return trading_agent, session_id
+    
     else:
-        raise ValueError(f"Unsupported AI provider: {ai_provider}. Only Amazon Bedrock is supported for now.")
+        raise ValueError(f"Unsupported AI provider: {ai_provider}")
+
+def get_agent_data_for_session(agent_id: str, session_id: str = None) -> dict:
+    """
+    Get agent data for a session, combining session state with agent manager data
+    This function ensures we have complete agent configuration (including sensitive data)
+    while maintaining security by only storing non-sensitive data in session state
+    """
+    print(f"[DEBUG] Getting agent data for agent_id: {agent_id}, session_id: {session_id}")
+    
+    # If we have a session_id, try to get agent config from session state first
+    if session_id:
+        session_agent_config = session_manager.get_agent_config_for_resume(session_id)
+        if session_agent_config:
+            print(f"[DEBUG] Found agent config in session state: {session_agent_config}")
+            
+            # Use the config_agent_id from session state for getting full agent config
+            config_agent_id = session_agent_config.get("id", agent_id)
+            print(f"[DEBUG] Using config_agent_id: {config_agent_id}")
+            
+            # Get full agent config from agent manager (includes sensitive data)
+            full_agent_config = agent_manager.get_agent(config_agent_id)
+            if full_agent_config:
+                print(f"[DEBUG] Found full agent config in agent manager: {full_agent_config.get('name', 'Unknown')}")
+                
+                # Combine session state (non-sensitive) with agent manager (full config)
+                merged_agent_data = {
+                    "id": session_agent_config.get("id", config_agent_id),
+                    "name": session_agent_config.get("name", full_agent_config.get("name", "Unknown Agent")),
+                    "ai_provider": session_agent_config.get("ai_provider", full_agent_config.get("ai_provider", "anthropic")),
+                    "trading_chain": session_agent_config.get("trading_chain", full_agent_config.get("trading_chain", "unknown")),
+                    "config": full_agent_config.get("config", {})  # Use full config with sensitive data
+                }
+                print(f"[DEBUG] Successfully merged agent data")
+                return merged_agent_data
+            else:
+                print(f"[DEBUG] Agent not found in agent manager, using session config only")
+                return session_agent_config
+        else:
+            print(f"[DEBUG] No agent config found in session state")
+    
+    # Fallback to agent manager only
+    print(f"[DEBUG] Using agent manager fallback")
+    agent_data = agent_manager.get_agent(agent_id)
+    if agent_data:
+        print(f"[DEBUG] Found agent in agent manager: {agent_data.get('name', 'Unknown')}")
+    else:
+        print(f"[DEBUG] Agent not found in agent manager either")
+    
+    return agent_data
 
 def setup_routes(app):
     """Setup all routes for the FastAPI app"""
@@ -103,11 +264,6 @@ def setup_routes(app):
     async def root():
         """Main terminal interface"""
         return HTMLResponse(main_page_template(agent_manager.get_agents()))
-    
-    @app.get("/interactive")
-    async def interactive():
-        """Interactive mode page"""
-        return HTMLResponse(interactive_mode_template())
     
     @app.get("/select-agent-for-session")
     async def select_agent_for_session():
@@ -119,7 +275,7 @@ def setup_routes(app):
         """Chat session page for specific agent"""
         agent_data = agent_manager.get_agent(agent_id)
         if agent_data:
-            # If session_id is provided, load preloaded messages for continuity
+            # Load preloaded messages if session_id provided
             messages = []
             if session_id:
                 try:
@@ -143,20 +299,23 @@ def setup_routes(app):
     @app.get("/chat-stream/{agent_id}")
     async def chat_stream(agent_id: str, message: str = Query(...), session_id: str = Query(None)):
         """Streaming endpoint for chat messages"""
-        # Clean session_id by removing any trailing brackets or whitespace
+        # Clean session_id
         if session_id:
             session_id = session_id.rstrip(']').strip()
+        
         print(f"[DEBUG] Chat stream requested for agent: {agent_id}, message: {message}, session_id: {session_id}")
         
-        agent_data = agent_manager.get_agent(agent_id)
+        # Get agent data using our clean function
+        agent_data = get_agent_data_for_session(agent_id, session_id)
+        
         if not agent_data:
             print(f"[DEBUG] Agent not found: {agent_id}")
             return {"error": "Agent not found"}
         
-        print(f"[DEBUG] Agent data: {agent_data}")
+        print(f"[DEBUG] Agent data retrieved successfully: {agent_data.get('name', 'Unknown')}")
         
         try:
-            # Initialize agent with configuration (pass session_id if provided for continuity)
+            # Initialize agent with configuration
             print(f"[DEBUG] Initializing Strands agent...")
             agent_instance, agent_session_id = initialize_strands_agent(agent_data, agent_id, session_id)
             print(f"[DEBUG] Agent initialized successfully with session ID: {agent_session_id}")
@@ -165,12 +324,11 @@ def setup_routes(app):
                 try:
                     print(f"[DEBUG] Starting stream for message: {message}")
                     
-                    # Send session info as first message if available
+                    # Send session info as first message
                     if agent_session_id:
                         yield f"data: [SESSION_ID:{agent_session_id}]\n\n"
                         print(f"[DEBUG] Sent session ID to frontend: {agent_session_id}")
                     
-                    # Track if we've already sent text content to avoid duplication
                     text_sent = False
                     
                     # Stream response from agent
@@ -178,50 +336,31 @@ def setup_routes(app):
                     async for event in agent_stream:
                         print(f"[DEBUG] Stream event type: {type(event)}, content: {event}")
                         
-                        # Extract text content from different event types
+                        # Extract text content with priority order
                         text_content = ""
                         if isinstance(event, dict):
-                            # Handle dictionary events - STRICT PRIORITY to avoid duplication
                             if 'data' in event and isinstance(event['data'], str) and event['data'].strip():
-                                # This is the primary text content - most reliable
                                 text_content = event['data']
                                 print(f"[DEBUG] Processing data field: '{text_content}'")
-                                text_sent = True  # Mark that we've sent text
-                            elif 'message' in event:
-                                # Handle complete message events - ONLY if no data field was sent
-                                if not text_sent:
-                                    message_data = event['message']
-                                    if isinstance(message_data, dict) and 'content' in message_data:
-                                        content_list = message_data['content']
-                                        if content_list and len(content_list) > 0:
-                                            # Extract text from first content item
-                                            first_content = content_list[0]
-                                            if isinstance(first_content, dict) and 'text' in first_content:
-                                                text_content = first_content['text']
-                                                print(f"[DEBUG] Processing message field (fallback): '{text_content}'")
-                                else:
-                                    print(f"[DEBUG] Skipping message field - text already sent via data field")
+                                text_sent = True
+                            elif 'message' in event and not text_sent:
+                                message_data = event['message']
+                                if isinstance(message_data, dict) and 'content' in message_data:
+                                    content_list = message_data['content']
+                                    if content_list and len(content_list) > 0:
+                                        first_content = content_list[0]
+                                        if isinstance(first_content, dict) and 'text' in first_content:
+                                            text_content = first_content['text']
+                                            print(f"[DEBUG] Processing message field: '{text_content}'")
                             elif 'event' in event:
                                 event_data = event['event']
-                                if isinstance(event_data, dict):
-                                    if 'contentBlockDelta' in event_data:
-                                        # IMPORTANT: Skip contentBlockDelta entirely to avoid duplication
-                                        # The data field above already contains the same text
-                                        print(f"[DEBUG] Skipping contentBlockDelta to prevent duplication")
-                                        continue
-                                    elif 'messageStart' in event_data or 'messageStop' in event_data or 'contentBlockStop' in event_data:
-                                        # Control events, skip content
-                                        print(f"[DEBUG] Skipping control event: {event_data}")
-                                        continue
-                                    elif 'metadata' in event_data:
-                                        # Metadata events, skip content
-                                        print(f"[DEBUG] Skipping metadata event")
-                                        continue
+                                if isinstance(event_data, dict) and 'contentBlockDelta' in event_data:
+                                    print(f"[DEBUG] Skipping contentBlockDelta to prevent duplication")
+                                    continue
                         elif isinstance(event, str):
-                            # Handle string events directly
                             text_content = event
                         
-                        # Only send non-empty text content
+                        # Send non-empty text content
                         if text_content and text_content.strip():
                             yield f"data: {text_content}\n\n"
                     
@@ -242,6 +381,136 @@ def setup_routes(app):
             import traceback
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             return {"error": str(e)}
+    
+    @app.get("/resume-session/{session_id}")
+    async def resume_session(session_id: str):
+        """Resume a specific session - Simplified Version"""
+        try:
+            print(f"[DEBUG] Resuming session: {session_id}")
+            
+            # Get session messages
+            messages = session_manager.get_session_messages(session_id)
+            if not messages:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Session Not Found</title></head>
+<body>
+<script>alert('Session not found or has no messages'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+                """)
+            
+            # Get session info
+            session_list = session_manager.list_sessions()
+            session_info = None
+            for s in session_list:
+                if s.get("session_id") == session_id:
+                    session_info = s
+                    break
+            
+            if not session_info:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Session Not Found</title></head>
+<body>
+<script>alert('Session not found'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+                """)
+            
+            # Extract agent_id from session info
+            agent_id_full = session_info.get("agent_info", {}).get("agent_id", "")
+            print(f"[DEBUG] Full agent_id from session: {agent_id_full}")
+            
+            # Extract base agent_id (remove "trading_agent_" prefix if present)
+            if agent_id_full.startswith("trading_agent_"):
+                base_agent_id = agent_id_full.replace("trading_agent_", "")
+                print(f"[DEBUG] Extracted base agent_id: {base_agent_id}")
+            else:
+                base_agent_id = agent_id_full
+                print(f"[DEBUG] Using agent_id as is: {base_agent_id}")
+            
+            if not base_agent_id:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Agent Not Found</title></head>
+<body>
+<script>alert('Agent not found for this session'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+                """)
+            
+            # Get agent data using our clean function
+            agent_data = get_agent_data_for_session(base_agent_id, session_id)
+            
+            if not agent_data:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Agent Not Found</title></head>
+<body>
+<script>alert('Agent not found'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+                """)
+            
+            print(f"[DEBUG] Successfully got agent data for resume: {agent_data.get('name', 'Unknown')}")
+            
+            # Return chat session with preloaded messages
+            return HTMLResponse(chat_session_template(base_agent_id, agent_data, session_id, messages))
+            
+        except Exception as e:
+            print(f"[DEBUG] Error resuming session: {e}")
+            import traceback
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Error resuming session: {str(e)}'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+            """)
+    
+    @app.get("/resume-latest")
+    async def resume_latest_session():
+        """Resume the most recent session"""
+        try:
+            latest_session = session_manager.get_latest_session()
+            if not latest_session:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>No Sessions</title></head>
+<body>
+<script>alert('No previous sessions found'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+                """)
+            
+            session_id = latest_session.get("session_id")
+            return await resume_session(session_id)
+        except Exception as e:
+            print(f"[DEBUG] Error resuming latest session: {e}")
+            return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Error resuming latest session'); window.location.href='/select-agent-for-session';</script>
+</body>
+</html>
+            """)
+    
+    # Include all other routes from the original file (keeping them unchanged)
+    @app.get("/interactive")
+    async def interactive():
+        """Interactive mode page"""
+        return HTMLResponse(interactive_mode_template())
     
     @app.get("/views")
     async def views():
@@ -283,33 +552,27 @@ def setup_routes(app):
     @app.get("/create-agent/step2")
     async def create_agent_step2(request: Request, provider: str = Query(...)):
         """Create agent step 2 - select trading chain"""
-        # Extract all query parameters except 'provider' as config params
         config_params = dict(request.query_params)
-        config_params.pop('provider', None)  # Remove provider from config params
+        config_params.pop('provider', None)
         return HTMLResponse(create_agent_step2_template(provider, config_params))
     
     @app.get("/create-agent/confirm")
     async def create_agent_confirm(request: Request, provider: str = Query(...), chain: str = Query(...)):
         """Create agent confirmation page"""
-        # Extract all query parameters except 'provider' and 'chain' as config params
         config_params = dict(request.query_params)
-        config_params.pop('provider', None)  # Remove provider from config params
-        config_params.pop('chain', None)     # Remove chain from config params
+        config_params.pop('provider', None)
+        config_params.pop('chain', None)
         return HTMLResponse(create_agent_confirm_template(provider, chain, config_params))
     
     @app.get("/create-agent/final")
     async def create_agent_final(request: Request, provider: str = Query(...), chain: str = Query(...)):
         """Finalize agent creation"""
         try:
-            # Extract all query parameters except 'provider' and 'chain' as config params
             config_params = dict(request.query_params)
-            config_params.pop('provider', None)  # Remove provider from config params
-            config_params.pop('chain', None)     # Remove chain from config params
-            
-            # Filter out empty config values and create config dict
+            config_params.pop('provider', None)
+            config_params.pop('chain', None)
             config = {k: v for k, v in config_params.items() if v and v != ""}
             
-            # Create the agent with UUID-based ID and descriptive name
             new_agent = agent_manager.create_agent(
                 ai_provider=provider,
                 trading_chain=chain,
@@ -541,36 +804,6 @@ def setup_routes(app):
                 </div>
             </div>
         </div>
-
-        <div class="section">
-            <h2>Risk Management</h2>
-            <div class="config-grid">
-                <div class="config-item">
-                    <h3>Trade Limits</h3>
-                    <p>Max Trade Size: <span class="value">${settings_data['risk_settings']['max_trade_size_usd']:,}</span></p>
-                    <p>Max Daily Trades: <span class="value">{settings_data['risk_settings']['max_daily_trades']}</span></p>
-                    <p>Max Position Size: <span class="value">{settings_data['risk_settings']['max_position_size_percent']}%</span></p>
-                </div>
-                <div class="config-item">
-                    <h3>Stop Loss / Take Profit</h3>
-                    <p>Stop Loss: <span class="value">{settings_data['risk_settings']['stop_loss_percent']}%</span></p>
-                    <p>Take Profit: <span class="value">{settings_data['risk_settings']['take_profit_percent']}%</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Storage</h2>
-            <div class="config-grid">
-                <div class="config-item">
-                    <h3>Walrus Storage</h3>
-                    <p>Status: <span class="value enabled">Enabled</span></p>
-                    <p>Endpoint: <span class="value">{settings_data['storage']['walrus']['endpoint']}</span></p>
-                    <p>Publisher: <span class="value">publisher.walrus.ai</span></p>
-                    <button class="toggle enabled">Enabled</button>
-                </div>
-            </div>
-        </div>
     </div>
 </body>
 </html>
@@ -625,7 +858,6 @@ def setup_routes(app):
         """Get performance metrics"""
         return mock_data.get_performance_metrics()
     
-    # Session Management Routes
     @app.get("/api/sessions")
     async def get_sessions():
         """Get all available sessions"""
@@ -655,114 +887,3 @@ def setup_routes(app):
         except Exception as e:
             print(f"[DEBUG] Error getting latest session: {e}")
             return {"session": None, "error": str(e)}
-    
-    @app.get("/resume-session/{session_id}")
-    async def resume_session(session_id: str):
-        """Resume a specific session"""
-        try:
-            # Get session messages
-            messages = session_manager.get_session_messages(session_id)
-            if not messages:
-                return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>Session Not Found</title></head>
-<body>
-<script>alert('Session not found or has no messages'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-                """)
-            
-            # Extract agent info from the first message or session
-            session_list = session_manager.list_sessions()
-            session_info = None
-            for s in session_list:
-                if s.get("session_id") == session_id:
-                    session_info = s
-                    break
-            
-            if not session_info:
-                return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>Session Not Found</title></head>
-<body>
-<script>alert('Session not found'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-                """)
-            
-            # Extract agent_id from session info
-            agent_id_full = session_info.get("agent_info", {}).get("agent_id", "")
-            # Extract the short agent_id from the full agent_id (remove "trading_agent_" prefix)
-            agent_id = agent_id_full.replace("trading_agent_", "") if agent_id_full.startswith("trading_agent_") else agent_id_full
-            
-            if not agent_id:
-                return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>Agent Not Found</title></head>
-<body>
-<script>alert('Agent not found for this session'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-                """)
-            
-            # Get agent data
-            agent_data = agent_manager.get_agent(agent_id)
-            if not agent_data:
-                return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>Agent Not Found</title></head>
-<body>
-<script>alert('Agent not found'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-                """)
-            
-            # Return chat session with preloaded messages (pass session_id for continuity)
-            return HTMLResponse(chat_session_template(agent_id, agent_data, session_id, messages))
-        except Exception as e:
-            print(f"[DEBUG] Error resuming session: {e}")
-            import traceback
-            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-            return HTMLResponse(f"""
-<!DOCTYPE html>
-<html>
-<head><title>Error</title></head>
-<body>
-<script>alert('Error resuming session: {str(e)}'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-            """)
-    
-    @app.get("/resume-latest")
-    async def resume_latest_session():
-        """Resume the most recent session"""
-        try:
-            latest_session = session_manager.get_latest_session()
-            if not latest_session:
-                return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>No Sessions</title></head>
-<body>
-<script>alert('No previous sessions found'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-                """)
-            
-            session_id = latest_session.get("session_id")
-            return await resume_session(session_id)
-        except Exception as e:
-            print(f"[DEBUG] Error resuming latest session: {e}")
-            return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head><title>Error</title></head>
-<body>
-<script>alert('Error resuming latest session'); window.location.href='/select-agent-for-session';</script>
-</body>
-</html>
-            """)

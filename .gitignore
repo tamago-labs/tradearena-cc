@@ -133,4 +133,5 @@ global-dashboard/node_modules/
 .env.production.local
 
 sessions/
-config/
+config/config_agents.json
+old/

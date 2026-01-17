@@ -925,16 +925,16 @@ class InteractiveMenu extends SubMenu {{
             sessions.forEach(session => {{
                 const sessionDate = new Date(session.updated_at).toLocaleDateString();
                 const sessionTime = new Date(session.updated_at).toLocaleTimeString([], {{hour: '2-digit', minute:'2-digit'}});
-                const messageCount = session.message_count || 0;
+                const sessionSize = session.file_size || '0B';
                 const agentInfo = session.agent_info || {{}};
-                const agentName = agentInfo.agent_id || 'Unknown Agent';
+                const providerDisplay = agentInfo.ai_provider_display || 'Unknown';
+                const tradingChain = agentInfo.trading_chain || 'unknown';
                 
                 const sessionItem = document.createElement('div');
                 sessionItem.className = 'menu-item';
                 sessionItem.setAttribute('data-action', `session-${{session.session_id}}`);
                 sessionItem.innerHTML = `
-                    Resume Session [${{sessionDate}} ${{sessionTime}}]
-                    <span class="session-info">${{messageCount}} messages</span>
+                    Resume Session [${{sessionDate}} ${{sessionTime}}] - ${{providerDisplay}} (${{tradingChain.charAt(0).toUpperCase() + tradingChain.slice(1)}}) [${{sessionSize}}]
                 `;
                 
                 sessionsList.appendChild(sessionItem);
