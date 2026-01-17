@@ -62,7 +62,7 @@ def main_page_template(agents: list = None) -> str:
         <div class="terminal-header">
             <div class="ascii-art">{TRADE_ARENA_ASCII}</div>
             <div class="title">Vibe Trading Arena for AI Agents</div>
-            <div class="subtitle">Cronos · Kaia · Sui · Walrus Verified — v1.0.0</div>
+            <div class="subtitle">Cronos · Kaia · Sui</div>
         </div>
         
         <div class="menu-container">
@@ -80,9 +80,6 @@ def main_page_template(agents: list = None) -> str:
                     </div>
                     <div class="menu-item" data-action="walrus">
                         <span class="status-indicator online"></span>Walrus Settings
-                    </div>
-                    <div class="menu-item" data-action="logs">
-                        <span class="status-indicator online"></span>Agent Logs
                     </div>
                 </div>
             </div>
@@ -462,7 +459,7 @@ def create_agent_config_template(provider: str) -> str:
                     
                     <div class="credentials-help">
                         <h4>📋 API Key Setup:</h4>
-                        <p>• Get your API key from console.anthropic.com</p>
+                        <p>• Get your API key from platform.claude.com</p>
                         <p>• Ensure you have sufficient credits</p>
                         <p>• API keys should start with "sk-ant-"</p>
                     </div>
@@ -481,7 +478,7 @@ def create_agent_config_template(provider: str) -> str:
                     <div class="credentials-help">
                         <h4>📋 API Key Setup:</h4>
                         <p>• Get your API key from ai.google.dev</p>
-                        <p>• Enable the Gemini API in your Google Cloud project</p>
+                        <p>• Enable Gemini API in your Google Cloud project</p>
                         <p>• API keys should start with "AIzaSy"</p>
                     </div>
         """
@@ -495,11 +492,11 @@ def create_agent_config_template(provider: str) -> str:
                     <div class="form-field">
                         <label class="form-label">Base URL (Optional):</label>
                         <input type="text" class="form-input" id="base_url" placeholder="{placeholder}" />
-                        <small style="color: #888888;">💡 Examples: GLM-4.6, DeepSeek-R1, etc.</small>
                     </div>
                     <div class="form-field">
                         <label class="form-label">Model ID:</label>
                         <input type="text" class="form-input" id="model_id" value="{provider_config['defaults']['model_id']}" />
+                        <small style="color: #888888;">💡 Examples: GLM-4.6, DeepSeek-R1, etc.</small>
                     </div>
                     
                     <div class="credentials-help">
@@ -1572,7 +1569,7 @@ document.getElementById('chatInput').addEventListener('keydown', function(e) {{
 // Handle Escape key
 document.addEventListener('keydown', function(e) {{
     if (e.key === 'Escape' && !isStreaming) {{
-        if (confirm('Are you sure you want to leave the chat session?')) {{
+        if (confirm('Are you sure you want to leave chat session?')) {{
             window.location.href = '/select-agent-for-session';
         }}
     }}
@@ -1592,217 +1589,3 @@ document.addEventListener('DOMContentLoaded', function() {{
     """
     
     return base_template(f"TradeArena Web Terminal - Chat with {agent_data['name']}", content, additional_css, additional_js)
-
-def logs_page_template() -> str:
-    """Agent logs page template"""
-    additional_css = """
-.logs-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border: 2px solid #00ff00;
-    background: rgba(0, 255, 0, 0.05);
-    padding: 15px;
-    overflow: hidden;
-}
-
-.logs-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #00ff00;
-}
-
-.log-level {
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.log-level.info { background: #00ff00; color: #000000; }
-.log-level.warn { background: #ffff00; color: #000000; }
-.log-level.error { background: #ff0000; color: #ffffff; }
-.log-level.debug { background: #00ccff; color: #000000; }
-
-.logs-content {
-    flex: 1;
-    overflow-y: auto;
-    font-size: 12px;
-    line-height: 1.4;
-}
-
-.log-entry {
-    margin: 2px 0;
-    padding: 2px 0;
-    white-space: pre-wrap;
-    word-break: break-all;
-}
-
-.log-time {
-    color: #00cc00;
-    margin-right: 10px;
-}
-
-.log-message {
-    color: #00ff00;
-}
-
-.log-message.error {
-    color: #ff0000;
-}
-
-.log-message.warn {
-    color: #ffff00;
-}
-
-.log-message.debug {
-    color: #00ccff;
-}
-
-.controls {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.control-btn {
-    background: #00ff00;
-    color: #000000;
-    border: 2px solid #00ff00;
-    padding: 8px 16px;
-    margin: 0 5px;
-    font-family: inherit;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.control-btn:hover {
-    background: #000000;
-    color: #00ff00;
-}
-    """
-    
-    content = """
-        <div class="terminal-header">
-            <div class="title">AGENT LOGS</div>
-        </div>
-        
-        <div class="logs-container">
-            <div class="logs-header">
-                <span>Live Agent Activity Log</span>
-                <span class="log-level info">LIVE</span>
-            </div>
-            
-            <div class="logs-content" id="logsContent">
-                <div class="log-entry">
-                    <span class="log-time">10:45:12</span>
-                    <span class="log-message info">[INFO] TradeArena Agent System initialized</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:13</span>
-                    <span class="log-message info">[INFO] Connecting to Cronos blockchain...</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:14</span>
-                    <span class="log-message info">[INFO] Successfully connected to Cronos RPC</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:15</span>
-                    <span class="log-message info">[INFO] Connecting to KAIA blockchain...</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:16</span>
-                    <span class="log-message warn">[WARN] High gas fees detected on KAIA network</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:17</span>
-                    <span class="log-message info">[INFO] Market scanner started</span>
-                </div>
-                <div class="log-entry">
-                    <span class="log-time">10:45:18</span>
-                    <span class="log-message info">[INFO] Scanning for arbitrage opportunities...</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="controls">
-            <button class="control-btn" onclick="clearLogs()">Clear Logs</button>
-            <button class="control-btn" onclick="togglePause()">Pause</button>
-            <button class="control-btn" onclick="exportLogs()">Export</button>
-            <button class="control-btn" onclick="window.location.href='/'">Back to Menu</button>
-        </div>
-        
-        <div class="instructions">
-            Press Escape to go back • <span class="blink">_</span>
-        </div>
-    """
-    
-    additional_js = """
-let isPaused = false;
-let logIndex = 28;
-
-function addLog() {
-    if (isPaused) return;
-    
-    const logsContent = document.getElementById('logsContent');
-    const now = new Date();
-    const time = now.toTimeString().split(' ')[0];
-    
-    const messages = [
-        { type: 'info', text: '[INFO] Scanning market conditions...' },
-        { type: 'debug', text: '[DEBUG] Checking liquidity pools...' },
-        { type: 'info', text: '[INFO] Monitoring price movements...' },
-        { type: 'warn', text: '[WARN] Volatility increasing in DeFi markets' },
-        { type: 'info', text: '[INFO] AI model analyzing market sentiment...' },
-        { type: 'debug', text: '[DEBUG] Updating portfolio metrics...' }
-    ];
-    
-    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-    
-    const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
-    logEntry.innerHTML = `
-        <span class="log-time">${time}</span>
-        <span class="log-message ${randomMessage.type}">${randomMessage.text}</span>
-    `;
-    
-    logsContent.appendChild(logEntry);
-    logsContent.scrollTop = logsContent.scrollHeight;
-    
-    // Limit logs to last 50 entries
-    const entries = logsContent.querySelectorAll('.log-entry');
-    if (entries.length > 50) {
-        entries[0].remove();
-    }
-}
-
-function clearLogs() {
-    const logsContent = document.getElementById('logsContent');
-    logsContent.innerHTML = '<div class="log-entry"><span class="log-time">' + 
-        new Date().toTimeString().split(' ')[0] + 
-        '</span><span class="log-message info">[INFO] Logs cleared</span></div>';
-}
-
-function togglePause() {
-    isPaused = !isPaused;
-    event.target.textContent = isPaused ? 'Resume' : 'Pause';
-}
-
-function exportLogs() {
-    alert('Exporting logs to file... (This would download a log file)');
-}
-
-// Simulate live log updates
-setInterval(addLog, 3000);
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        window.location.href = '/';
-    }
-});
-    """
-    
-    return base_template("TradeArena Web Terminal - Agent Logs", content, additional_css, additional_js)

@@ -260,9 +260,6 @@ class TerminalMenu {
             case 'walrus':
                 window.location.href = '/walrus';
                 break;
-            case 'logs':
-                window.location.href = '/logs';
-                break;
         }
     }
     
