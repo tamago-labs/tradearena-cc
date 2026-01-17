@@ -7,6 +7,7 @@ import os
 import json
 import glob
 import logging
+import shutil
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -351,6 +352,23 @@ class SessionManager:
         
         return None
     
+    def delete_session(self, session_id: str) -> bool:
+        """Delete an entire session directory and all its contents"""
+        session_dir = os.path.join(self.sessions_dir, f"session_{session_id}")
+        
+        if not os.path.exists(session_dir):
+            logger.warning(f"Session directory does not exist: {session_dir}")
+            return False
+        
+        try:
+            # Remove the entire session directory and all its contents
+            shutil.rmtree(session_dir)
+            logger.info(f"Successfully deleted session: {session_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}")
+            return False
+
     def get_agent_config_for_resume(self, session_id: str) -> Optional[Dict]:
         """Get agent configuration for resuming a session"""
         session_dir = os.path.join(self.sessions_dir, f"session_{session_id}")

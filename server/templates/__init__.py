@@ -1,14 +1,19 @@
 """
-Backward compatibility layer for TradeArena Web Terminal templates
+Templates package for TradeArena Web Terminal
 
-This file imports all template functions from the new organized modules
-to maintain compatibility with existing imports.
+This package contains organized template modules for different parts of the application:
+- base: Base template and shared components
+- main: Main menu templates
+- agents: Agent management templates
+- interactive: Interactive mode and chat session templates
+- views: Views management templates
+- walrus: Walrus settings templates
 """
 
-# Import all template functions from the organized modules
-from .templates.base import base_template, TRADE_ARENA_ASCII
-from .templates.main import main_page_template
-from .templates.agents import (
+# Import all template functions for backward compatibility
+from .base import base_template, TRADE_ARENA_ASCII
+from .main import main_page_template
+from .agents import (
     manage_agents_template,
     manage_agent_template,
     create_agent_template,
@@ -16,18 +21,13 @@ from .templates.agents import (
     create_agent_step2_template,
     create_agent_confirm_template
 )
-from .templates.interactive import (
+from .interactive import (
     interactive_mode_template,
     select_agent_for_session_template,
     chat_session_template
 )
-from .templates.views import views_page_template
-from .templates.walrus import walrus_settings_template
-
-# For backward compatibility, also export the old function name
-def walrus_page_template():
-    """Legacy wrapper for walrus settings template"""
-    return walrus_settings_template()
+from .views import views_page_template
+from .walrus import walrus_settings_template
 
 __all__ = [
     # Base templates
@@ -55,5 +55,4 @@ __all__ = [
     
     # Walrus templates
     'walrus_settings_template',
-    'walrus_page_template',  # Backward compatibility
 ]

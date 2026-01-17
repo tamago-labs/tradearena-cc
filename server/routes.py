@@ -21,7 +21,7 @@ from .templates import (
     main_page_template,
     interactive_mode_template,
     views_page_template,
-    walrus_page_template,
+    walrus_settings_template,
     manage_agents_template,
     manage_agent_template,
     create_agent_template,
@@ -633,7 +633,7 @@ def setup_routes(app):
     @app.get("/walrus")
     async def walrus():
         """Walrus settings page"""
-        return HTMLResponse(walrus_page_template())
+        return HTMLResponse(walrus_settings_template())
     
     @app.get("/agents")
     async def agents():
@@ -693,3 +693,44 @@ def setup_routes(app):
         except Exception as e:
             print(f"[DEBUG] Error getting latest session: {e}")
             return {"session": None, "error": str(e)}
+    
+    @app.get("/delete-session/{session_id}")
+    async def delete_session(session_id: str):
+        """Delete a specific session and redirect to interactive mode"""
+        try:
+            # Clean session ID by removing any trailing ] character
+            cleaned_session_id = session_id.rstrip(']')
+            print(f"[DEBUG] Deleting session: {session_id} -> cleaned: {cleaned_session_id}")
+            success = session_manager.delete_session(cleaned_session_id)
+            
+            if success:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Session Deleted</title></head>
+<body>
+<script>alert('Session deleted successfully!'); window.location.href='/interactive';</script>
+</body>
+</html>
+                """)
+            else:
+                return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Session not found or could not be deleted'); window.location.href='/interactive';</script>
+</body>
+</html>
+                """)
+        except Exception as e:
+            print(f"[DEBUG] Error deleting session: {e}")
+            return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head><title>Error</title></head>
+<body>
+<script>alert('Error deleting session: {str(e)}'); window.location.href='/interactive';</script>
+</body>
+</html>
+            """)
