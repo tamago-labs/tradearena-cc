@@ -9,7 +9,7 @@ from typing import Dict, List, Any
 from pathlib import Path
 
 # Path to agent configurations file
-AGENTS_FILE = Path(__file__).parent.parent / "config" / "agents.json"
+AGENTS_FILE = Path(__file__).parent.parent / "config" / "config_agents.json"
 
 class AgentManager:
     """Manage agent configurations"""
