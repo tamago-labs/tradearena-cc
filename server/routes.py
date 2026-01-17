@@ -12,6 +12,7 @@ import os
 import logging
 import boto3
 from strands import Agent
+from strands.agent.conversation_manager import SlidingWindowConversationManager
 from strands.models import BedrockModel
 from strands.models.anthropic import AnthropicModel
 from strands.models.gemini import GeminiModel
@@ -33,6 +34,13 @@ from .templates import (
 )
 from .agents import agent_manager, AI_PROVIDERS, TRADING_CHAINS
 from .sessions import session_manager
+
+def create_conversation_manager() -> SlidingWindowConversationManager:
+    """Create conversation manager with fixed settings for all agents"""
+    return SlidingWindowConversationManager(
+        window_size=15,  # Fixed window size
+        should_truncate_results=True  # Fixed truncation setting
+    )
 
 def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = None) -> tuple[Agent, str]:
     """Initialize a Strands agent with the given configuration"""
@@ -63,6 +71,9 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         session_id=session_id,
         storage_dir=sessions_dir
     )
+    
+    # Create conversation manager with fixed settings
+    conversation_manager = create_conversation_manager()
     
     # Create sanitized agent state (no sensitive data in session state)
     sanitized_config = {}
@@ -95,6 +106,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             tools=[],
             model=model,
             session_manager=session_manager,
+            conversation_manager=conversation_manager,
             callback_handler=None,
             state=agent_state
         )
@@ -122,6 +134,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             tools=[],
             model=model,
             session_manager=session_manager,
+            conversation_manager=conversation_manager,
             callback_handler=None,
             state=agent_state
         )
@@ -157,6 +170,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             tools=[],
             model=model,
             session_manager=session_manager,
+            conversation_manager=conversation_manager,
             callback_handler=None,
             state=agent_state
         )
@@ -193,6 +207,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             tools=[],
             model=model,
             session_manager=session_manager,
+            conversation_manager=conversation_manager,
             callback_handler=None,
             state=agent_state
         )
