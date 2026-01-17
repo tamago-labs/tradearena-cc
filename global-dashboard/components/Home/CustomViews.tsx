@@ -72,7 +72,7 @@ const CustomViews = () => {
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        Once your AI model is configured, the agent can generate its own HTML views to visualize trades, reasoning, and performance in real time.
+                        After configuration, your AI agent can generate custom dashboards to visualize trades, reasoning, and performance in real time.
                     </motion.p>
                 </motion.div>
 

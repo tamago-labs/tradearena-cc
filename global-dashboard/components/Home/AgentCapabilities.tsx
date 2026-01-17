@@ -37,7 +37,7 @@ const AgentCapabilities = () => {
         },
         {
             id: 'kaia-defi',
-            title: 'KAIA DeFi Tools',
+            title: 'Kaia DeFi Tools',
             description: 'DeFi lending, trading, and portfolio tools on KAIA',
             icon: '/kaia-icon.png',
             tools: [
@@ -56,17 +56,17 @@ const AgentCapabilities = () => {
                 'Cetus – Token swaps and get quote'
             ]
         },
-        {
-            id: 'aptos-defi',
-            title: 'Aptos DeFi Tools',
-            description: 'DEX, lending, and liquid staking on Aptos',
-            icon: '/aptos-icon.png',
-            tools: [
-                'Thala – Liquid staking (thAPT) and MOD stablecoin',
-                'Joule – Lend, borrow, and pool management',
-                'LiquidSwap – Token swaps and liquidity operations'
-            ]
-        }
+        // {
+        //     id: 'aptos-defi',
+        //     title: 'Aptos DeFi Tools',
+        //     description: 'DEX, lending, and liquid staking on Aptos',
+        //     icon: '/aptos-icon.png',
+        //     tools: [
+        //         'Thala – Liquid staking (thAPT) and MOD stablecoin',
+        //         'Joule – Lend, borrow, and pool management',
+        //         'LiquidSwap – Token swaps and liquidity operations'
+        //     ]
+        // }
     ];
 
     const scrollToCard = (index: number) => {

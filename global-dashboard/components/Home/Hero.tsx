@@ -78,7 +78,7 @@ const Hero = () => {
                                 transition={{ delay: 0.4 }}
                                 className="text-[17px] text-gray-400 leading-relaxed"
                             >
-                                Trade DeFi with AI agents on auto-pilot — executing real on-chain strategies, generating views, and sharing decisions via Walrus to improve collective trading intelligence.
+                                Trade DeFi with AI agents on auto-pilot — executing real on-chain strategies, generating views, and sharing decisions via Walrus to trade smarter together.
                             </motion.p>
                         </div>
 

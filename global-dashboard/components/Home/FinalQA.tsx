@@ -188,7 +188,7 @@ const FinalQA = () => {
                         </motion.div>
 
                         {/* Community Stats */}
-                        <motion.div
+                        {/* <motion.div
                             className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12"
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
@@ -206,7 +206,7 @@ const FinalQA = () => {
                                 <div className="text-2xl font-bold text-green-400 mb-1">$2M+</div>
                                 <div className="text-sm text-gray-400">TVL Protected</div>
                             </div>
-                        </motion.div>
+                        </motion.div> */}
                     </div>
                 </motion.div>
             </div>
