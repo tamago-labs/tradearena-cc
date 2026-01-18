@@ -34,6 +34,9 @@ from .templates import (
 )
 from .agents import agent_manager, AI_PROVIDERS, TRADING_CHAINS
 from .sessions import session_manager
+from .tools import (
+    weather_forecast
+)
 
 def create_conversation_manager() -> SlidingWindowConversationManager:
     """Create conversation manager with fixed settings for all agents"""
@@ -44,7 +47,7 @@ def create_conversation_manager() -> SlidingWindowConversationManager:
 
 def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = None) -> tuple[Agent, str]:
     """Initialize a Strands agent with the given configuration"""
-    
+
     # Extract configuration from agent data
     ai_provider = agent_data.get('ai_provider', 'anthropic')
     config = agent_data.get('config', {})
@@ -103,7 +106,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[],
+            tools=[weather_forecast],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -131,7 +134,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[],
+            tools=[weather_forecast],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -167,7 +170,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[],
+            tools=[weather_forecast],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -204,7 +207,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[],
+            tools=[weather_forecast],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
