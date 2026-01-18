@@ -135,3 +135,4 @@ global-dashboard/node_modules/
 sessions/
 config/config_agents.json
 old/
+views/

@@ -34,9 +34,11 @@ from .templates import (
 )
 from .agents import agent_manager, AI_PROVIDERS, TRADING_CHAINS
 from .sessions import session_manager
-from .tools import (
-    weather_forecast
+from .tools import ( 
+    create_custom_view,
+    list_available_views
 )
+from .views_manager import views_manager
 
 def create_conversation_manager() -> SlidingWindowConversationManager:
     """Create conversation manager with fixed settings for all agents"""
@@ -106,7 +108,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[weather_forecast],
+            tools=[ create_custom_view, list_available_views],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -134,7 +136,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[weather_forecast],
+            tools=[ create_custom_view, list_available_views],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -170,7 +172,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[weather_forecast],
+            tools=[create_custom_view, list_available_views],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -207,7 +209,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         trading_agent = Agent(
             name=f"trading_agent_{agent_id}",
             agent_id=f"trading_agent_{agent_id}",
-            tools=[weather_forecast],
+            tools=[create_custom_view, list_available_views],
             model=model,
             session_manager=session_manager,
             conversation_manager=conversation_manager,
@@ -529,6 +531,51 @@ def setup_routes(app):
     async def views():
         """Manage views page"""
         return HTMLResponse(views_page_template())
+    
+    @app.get("/views/{filename}")
+    async def serve_view(filename: str):
+        """Serve individual view HTML file"""
+        try:
+            # Security check - only allow .html files
+            if not filename.endswith('.html'):
+                return HTMLResponse("Access denied", status_code=403)
+            
+            # Get view content
+            content = views_manager.get_view_content(filename)
+            if content is None:
+                return HTMLResponse("View not found", status_code=404)
+            
+            return HTMLResponse(content)
+        except Exception as e:
+            print(f"[DEBUG] Error serving view {filename}: {e}")
+            return HTMLResponse("Error loading view", status_code=500)
+    
+    @app.get("/api/views")
+    async def get_views():
+        """Get all views API endpoint"""
+        try:
+            views = views_manager.get_all_views()
+            return {"views": views}
+        except Exception as e:
+            print(f"[DEBUG] Error getting views: {e}")
+            return {"views": [], "error": str(e)}
+    
+    @app.delete("/api/views/{filename}")
+    async def delete_view_api(filename: str):
+        """Delete a specific view API endpoint"""
+        try:
+            # Security check - only allow .html files
+            if not filename.endswith('.html'):
+                return {"error": "Invalid file type"}
+            
+            success = views_manager.delete_view(filename)
+            if success:
+                return {"success": True, "message": "View deleted successfully"}
+            else:
+                return {"error": "View not found"}
+        except Exception as e:
+            print(f"[DEBUG] Error deleting view {filename}: {e}")
+            return {"error": str(e)}
     
     @app.get("/manage-agents")
     async def manage_agents():

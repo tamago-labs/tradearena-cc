@@ -410,6 +410,7 @@ def chat_session_template(agent_id: str, agent_data: dict, session_id: str = Non
                 </div>
                 <div>
                     <button class="send-btn" onclick="window.location.href='/interactive'" style="margin-right: 10px;">Back to Agents</button>
+                    <button class="send-btn" onclick="window.location.href='/views'" style="margin-right: 10px;">Views</button>
                     <button class="send-btn" onclick="deleteSession()">Delete Session</button>
                 </div>
             </div>
