@@ -57,21 +57,21 @@ const CONTRACT_ADDRESSES = {
 
 export function getEnvironmentConfig(): KAIAMCPEnvironment {
     // Validate required environment variables
-    const required = ['KAIA_RPC_URL'];
-    const missing = required.filter(key => !process.env[key]);
+    // const required = ['KAIA_RPC_URL'];
+    // const missing = required.filter(key => !process.env[key]);
     
-    if (missing.length > 0) {
-        console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
-        console.error(`💡 Please set the following in your .env file:`);
-        missing.forEach(key => {
-            const envKey = key.replace('KAIA_', '').toLowerCase();
-            console.error(`   ${key}=your_${envKey}_here`);
-        });
-        throw new Error('Missing required KAIA MCP configuration');
-    }
+    // if (missing.length > 0) {
+    //     console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    //     console.error(`💡 Please set the following in your .env file:`);
+    //     missing.forEach(key => {
+    //         const envKey = key.replace('KAIA_', '').toLowerCase();
+    //         console.error(`   ${key}=your_${envKey}_here`);
+    //     });
+    //     throw new Error('Missing required KAIA MCP configuration');
+    // }
 
     const config: KAIAMCPEnvironment = {
-        kaiaRpcUrl: process.env.KAIA_RPC_URL!,
+        kaiaRpcUrl: "https://public-en.node.kaia.io",
         network: (process.env.KAIA_NETWORK as NetworkType) || 'kaia'
     };
 
