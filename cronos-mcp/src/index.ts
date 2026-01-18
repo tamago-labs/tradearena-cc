@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CronosWalletAgent } from './agent/wallet';
+import { CronosAnalytics } from './utils/cronos_analytics';
 import { validateEnvironment, account, getEnvironmentConfig } from './config';
 import { CronosTools } from './mcp';
 
@@ -65,6 +66,9 @@ async function main() {
     // Validate environment before proceeding
     validateEnvironment();
     const environment = getEnvironmentConfig();
+
+    // Initialize CronosAnalytics for SDK functionality
+    CronosAnalytics.initialize();
 
     // Create wallet agent instance with private key if available
     const privateKey = environment.privateKey;

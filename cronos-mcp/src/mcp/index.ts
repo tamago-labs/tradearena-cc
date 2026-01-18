@@ -15,6 +15,20 @@ import {
   ExecuteVVSSwapTool 
 } from './vvs/swap_tools';
 
+// Import DeFi tools
+import {
+  CronosGetAllFarmsTool,
+  CronosGetFarmBySymbolTool,
+  CronosGetWhitelistedTokensTool
+} from './defi/get_defi_tools';
+
+// Import Exchange tools
+import {
+  CronosGetAllTickersTool,
+  CronosGetTickerTool,
+  CronosGetMarketSummaryTool
+} from './crypto-com-exchange/get_exchange_tools';
+
 // Combine all VVS tools
 const VVSTools = {
   // VVS Analytics tools
@@ -29,13 +43,35 @@ const VVSTools = {
   cronos_execute_vvs_swap: ExecuteVVSSwapTool,
 };
 
+// Combine all DeFi tools
+const DeFiTools = {
+  cronos_get_all_farms: CronosGetAllFarmsTool,
+  cronos_get_farm_by_symbol: CronosGetFarmBySymbolTool,
+  cronos_get_whitelisted_tokens: CronosGetWhitelistedTokensTool,
+};
+
+// Combine all Exchange tools
+const ExchangeTools = {
+  cronos_get_all_tickers: CronosGetAllTickersTool,
+  cronos_get_ticker: CronosGetTickerTool,
+  cronos_get_market_summary: CronosGetMarketSummaryTool,
+};
+
 export const CronosTools = {
   // Basic wallet information and account management
   ...WalletTools,
   
   // VVS Finance tools
   ...VVSTools,
+  
+  // DeFi analytics tools
+  ...DeFiTools,
+  
+  // Crypto.com Exchange tools
+  ...ExchangeTools,
 }
 
 // Export individual modules for direct access
 export * from './wallet';
+export * from './defi/get_defi_tools';
+export * from './crypto-com-exchange/get_exchange_tools';
