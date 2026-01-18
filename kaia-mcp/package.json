@@ -1,0 +1,57 @@
+{
+    "name": "kaia-mcp",
+    "version": "0.1.0",
+    "private": true,
+    "description": "MCP server for Kaia chain",
+    "main": "dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "kaia-mcp": "dist/index.js"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "prepare": "npm run build",
+        "test": "jest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tamago-labs/tradearena-cc.git"
+    },
+    "keywords": [
+        "kaia",
+        "blockchain",
+        "ai-agent",
+        "mcp",
+        "model-context-protocol",
+        "claude",
+        "web3",
+        "kilolend",
+        "dragonswap"
+    ],
+    "author": "Pisuth",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/tamago-labs/tradearena-cc/issues"
+    },
+    "homepage": "https://tamagolabs.com",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.10.2",
+        "axios": "^1.10.0",
+        "dotenv": "^17.2.3",
+        "viem": "^2.8.12",
+        "zod": "^3.24.3"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.14",
+        "@types/node": "^22.15.2",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.3.2",
+        "ts-node": "^10.9.2",
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.3"
+    }
+}
