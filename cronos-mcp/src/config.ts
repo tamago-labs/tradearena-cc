@@ -16,20 +16,20 @@ interface NetworkConfig {
 // Cronos MCP Environment Configuration
 export interface CronosMCPEnvironment {
     cronosRpcUrl: string;
-    privateKey: string;
+    privateKey?: string;
 }
  
 
 // Validation schemas using zod
 export const CronosMCPEnvironmentSchema = z.object({
-    privateKey: z.string().describe("Wallet private key"),
+    privateKey: z.string().optional().describe("Wallet private key"),
     cronosRpcUrl: z.string().url().describe("CRONOS RPC URL")
 });
 
 
 export function getEnvironmentConfig(): CronosMCPEnvironment {
 
-    const config: CronosMCPEnvironment = {
+    const config = {
         privateKey: process.env.CRONOS_PRIVATE_KEY || "",
         cronosRpcUrl: "https://evm.cronos.org"
     };

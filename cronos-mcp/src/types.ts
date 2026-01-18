@@ -7,6 +7,14 @@ export interface McpTool {
     handler: (agent: any, input: Record<string, any>) => Promise<any>;
 }
 
+// Common schemas
+export const AddressSchema = z.string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+    .describe("Ethereum address (0x...)");
+
+export const NetworkSchema = z.enum(['cronos', 'cronos-testnet'])
+    .describe("Network name");
+
 // Token information for wallet operations
 export interface TokenInfo {
     address: string;

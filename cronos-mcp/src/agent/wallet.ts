@@ -43,11 +43,42 @@ export class CronosWalletAgent  {
     }
   }
 
+  // ===== CONNECTION METHODS =====
+
+  async connect(): Promise<void> {
+    // Connection is handled in constructor, but kept for compatibility
+  }
+
+  async disconnect(): Promise<void> {
+    // Cleanup if needed
+  }
+
+  // ===== WALLET INFO METHODS =====
+
   /**
    * Get wallet address
    */
   getAddress(): Address {
-    return account.address;
+    if (!this.account) {
+      throw new Error('Wallet not initialized');
+    }
+    return this.account.address;
+  }
+
+  /**
+   * Check if wallet is in transaction mode
+   */
+  isTransactionMode(): boolean {
+    return !!this.walletClient;
+  }
+
+  /**
+   * Helper method to ensure transaction mode is required
+   */
+  private requireTransactionMode(): void {
+    if (!this.walletClient) {
+      throw new Error('This operation requires transaction mode. Provide a private key to enable transactions.');
+    }
   }
 
   /**
@@ -175,10 +206,12 @@ export class CronosWalletAgent  {
    * Send native CRO tokens
    */
   async sendNativeToken(to: Address, amount: string): Promise<{ hash: string }> {
+    this.requireTransactionMode();
+    
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1e18).toString());
     
-    const hash = await walletClient.sendTransaction({
-      account,
+    const hash = await this.walletClient!.sendTransaction({
+      account: this.account!,
       to,
       value: amountInWei,
       chain: networkInfo.chain
@@ -195,6 +228,8 @@ export class CronosWalletAgent  {
     to: Address, 
     amount: string
   ): Promise<{ hash: string }> {
+    this.requireTransactionMode();
+    
     // Get token decimals first
     const decimals = await publicClient.readContract({
       address: tokenAddress,
@@ -212,7 +247,7 @@ export class CronosWalletAgent  {
 
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals)).toString());
 
-    const hash = await walletClient.writeContract({
+    const hash = await this.walletClient!.writeContract({
       address: tokenAddress,
       abi: [
         {
@@ -228,7 +263,7 @@ export class CronosWalletAgent  {
       ] as const,
       functionName: 'transfer',
       args: [to, amountInWei],
-      account,
+      account: this.account!,
       chain: networkInfo.chain
     });
 
@@ -274,6 +309,8 @@ export class CronosWalletAgent  {
     spender: Address,
     amount: string
   ): Promise<{ hash: string }> {
+    this.requireTransactionMode();
+    
     // Get token decimals
     const decimals = await publicClient.readContract({
       address: tokenAddress,
@@ -291,7 +328,7 @@ export class CronosWalletAgent  {
 
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals)).toString());
 
-    const hash = await walletClient.writeContract({
+    const hash = await this.walletClient!.writeContract({
       address: tokenAddress,
       abi: [
         {
@@ -307,7 +344,7 @@ export class CronosWalletAgent  {
       ] as const,
       functionName: 'approve',
       args: [spender, amountInWei],
-      account,
+      account: this.account!,
       chain: networkInfo.chain
     });
 
@@ -318,9 +355,11 @@ export class CronosWalletAgent  {
    * Wrap CRO to WCRO
    */
   async wrapCRO(amount: string): Promise<{ hash: string }> {
+    this.requireTransactionMode();
+    
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1e18).toString());
 
-    const hash = await walletClient.writeContract({
+    const hash = await this.walletClient!.writeContract({
       address: TOKENS.WCRO,
       abi: [
         {
@@ -333,7 +372,7 @@ export class CronosWalletAgent  {
       ] as const,
       functionName: 'deposit',
       value: amountInWei,
-      account,
+      account: this.account!,
       chain: networkInfo.chain
     });
 
@@ -344,9 +383,11 @@ export class CronosWalletAgent  {
    * Unwrap WCRO to CRO
    */
   async unwrapWCRO(amount: string): Promise<{ hash: string }> {
+    this.requireTransactionMode();
+    
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1e18).toString());
 
-    const hash = await walletClient.writeContract({
+    const hash = await this.walletClient!.writeContract({
       address: TOKENS.WCRO,
       abi: [
         {
@@ -359,7 +400,7 @@ export class CronosWalletAgent  {
       ] as const,
       functionName: 'withdraw',
       args: [amountInWei],
-      account,
+      account: this.account!,
       chain: networkInfo.chain
     });
 
@@ -420,6 +461,31 @@ export class CronosWalletAgent  {
   async getGasPrice(): Promise<string> {
     const gasPrice = await publicClient.getGasPrice();
     return gasPrice.toString();
+  }
+
+  /**
+   * Generic contract write method for transaction operations
+   */
+  async writeContract(params: {
+    address: Address;
+    abi: any[];
+    functionName: string;
+    args?: any[];
+    value?: bigint;
+  }): Promise<string> {
+    this.requireTransactionMode();
+    
+    const hash = await this.walletClient!.writeContract({
+      address: params.address,
+      abi: params.abi,
+      functionName: params.functionName,
+      args: params.args || [],
+      ...(params.value && { value: params.value }),
+      account: this.account!,
+      chain: networkInfo.chain
+    });
+
+    return hash;
   }
 }
 
