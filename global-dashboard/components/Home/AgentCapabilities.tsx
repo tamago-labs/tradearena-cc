@@ -16,9 +16,9 @@ const AgentCapabilities = () => {
             description: 'Essential wallet operations and data tools',
             icon: '/tradearena-icon.png',
             tools: [
-                'Query wallet balances and asset holdings',
+                // 'Query wallet balances and asset holdings',
                 'Transfer tokens and manage accounts',
-                'Fetch real-time market prices (Pyth, CoinMarketCap)',
+                'Fetch real-time market prices (Pyth SDK, CoinMarketCap API)',
                 // 'Resolve on-chain domain information',
                 'Store and retrieve AI trade decisions and reasoning on Walrus Storage'
             ]
@@ -29,7 +29,7 @@ const AgentCapabilities = () => {
             description: 'DeFi execution and portfolio management on Cronos',
             icon: '/cronos-icon.png',
             tools: [
-                'Moonlander – trade execution and portfolio management',
+                'Moonlander – Trade perpetuals and portfolio management',
                 'Delphi – prediction market participation',
                 'VVS Finance – token swaps and price quotes',
                 'Cronos X402 protocol integrations'
@@ -42,7 +42,8 @@ const AgentCapabilities = () => {
             icon: '/kaia-icon.png',
             tools: [
                 'KiloLend – supply, borrow, portfolio management, and reward tracking',
-                'DragonSwap – token swaps and liquidity queries'
+                'DragonSwap – token swaps and get quotes',
+                'WKAIA – Wrap and unwrap KAIA tokens'
             ]
         },
         {
@@ -51,9 +52,9 @@ const AgentCapabilities = () => {
             description: 'DeFi staking, lending, and trading operations on Sui',
             icon: '/sui-icon.png',
             tools: [
-                'Sui Staking – List all validators, stake and unstake SUI',
-                'Scallop – Lend, borrow, list all pools',
-                'Cetus – Token swaps and get quote'
+                'Native Staking – List all validators, stake and unstake SUI',
+                '7K Aggregator – Swap across major Sui DEXes',
+                'Scallop / SuiLend – Lend, borrow' 
             ]
         },
         // {
