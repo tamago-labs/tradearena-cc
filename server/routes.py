@@ -39,6 +39,7 @@ from .tools import (
     list_available_views
 )
 from .views_manager import views_manager
+from .mcp_manager import mcp_manager
 
 def create_conversation_manager() -> SlidingWindowConversationManager:
     """Create conversation manager with fixed settings for all agents"""
@@ -97,6 +98,9 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         }
     }
     
+    # Get trading chain for MCP tool selection
+    trading_chain = agent_data.get('trading_chain', 'unknown')
+    
     # Initialize agent based on provider
     if ai_provider == "amazon-bedrock":
         model_id = config.get('model_id', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0')
@@ -105,16 +109,20 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         boto_session = boto3.Session(region_name=region_name)
         model = BedrockModel(model_id=model_id, boto_session=boto_session)
         
-        trading_agent = Agent(
-            name=f"trading_agent_{agent_id}",
-            agent_id=f"trading_agent_{agent_id}",
-            tools=[ create_custom_view, list_available_views],
-            model=model,
-            session_manager=session_manager,
-            conversation_manager=conversation_manager,
-            callback_handler=None,
-            state=agent_state
-        )
+        # Get MCP tools for this trading chain
+        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
+            all_tools = mcp_tools + [create_custom_view, list_available_views]
+            
+            trading_agent = Agent(
+                name=f"trading_agent_{agent_id}",
+                agent_id=f"trading_agent_{agent_id}",
+                tools=all_tools,
+                model=model,
+                session_manager=session_manager,
+                conversation_manager=conversation_manager,
+                callback_handler=None,
+                state=agent_state
+            )
         
         logger.info(f"Initialized Amazon Bedrock agent: {model_id} in {region_name}")
         return trading_agent, session_id
@@ -133,16 +141,20 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             max_tokens=max_tokens
         )
         
-        trading_agent = Agent(
-            name=f"trading_agent_{agent_id}",
-            agent_id=f"trading_agent_{agent_id}",
-            tools=[ create_custom_view, list_available_views],
-            model=model,
-            session_manager=session_manager,
-            conversation_manager=conversation_manager,
-            callback_handler=None,
-            state=agent_state
-        )
+        # Get MCP tools for this trading chain
+        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
+            all_tools = mcp_tools + [create_custom_view, list_available_views]
+            
+            trading_agent = Agent(
+                name=f"trading_agent_{agent_id}",
+                agent_id=f"trading_agent_{agent_id}",
+                tools=all_tools,
+                model=model,
+                session_manager=session_manager,
+                conversation_manager=conversation_manager,
+                callback_handler=None,
+                state=agent_state
+            )
         
         logger.info(f"Initialized Anthropic agent: {model_id}")
         return trading_agent, session_id
@@ -169,16 +181,20 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             }
         )
         
-        trading_agent = Agent(
-            name=f"trading_agent_{agent_id}",
-            agent_id=f"trading_agent_{agent_id}",
-            tools=[create_custom_view, list_available_views],
-            model=model,
-            session_manager=session_manager,
-            conversation_manager=conversation_manager,
-            callback_handler=None,
-            state=agent_state
-        )
+        # Get MCP tools for this trading chain
+        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
+            all_tools = mcp_tools + [create_custom_view, list_available_views]
+            
+            trading_agent = Agent(
+                name=f"trading_agent_{agent_id}",
+                agent_id=f"trading_agent_{agent_id}",
+                tools=all_tools,
+                model=model,
+                session_manager=session_manager,
+                conversation_manager=conversation_manager,
+                callback_handler=None,
+                state=agent_state
+            )
         
         logger.info(f"Initialized Gemini agent: {model_id}")
         return trading_agent, session_id
@@ -206,16 +222,20 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             }
         )
         
-        trading_agent = Agent(
-            name=f"trading_agent_{agent_id}",
-            agent_id=f"trading_agent_{agent_id}",
-            tools=[create_custom_view, list_available_views],
-            model=model,
-            session_manager=session_manager,
-            conversation_manager=conversation_manager,
-            callback_handler=None,
-            state=agent_state
-        )
+        # Get MCP tools for this trading chain
+        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
+            all_tools = mcp_tools + [create_custom_view, list_available_views]
+            
+            trading_agent = Agent(
+                name=f"trading_agent_{agent_id}",
+                agent_id=f"trading_agent_{agent_id}",
+                tools=all_tools,
+                model=model,
+                session_manager=session_manager,
+                conversation_manager=conversation_manager,
+                callback_handler=None,
+                state=agent_state
+            )
         
         logger.info(f"Initialized OpenAI Compatible agent: {model_id} (base_url: {base_url or 'default'})")
         return trading_agent, session_id

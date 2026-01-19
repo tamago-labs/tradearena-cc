@@ -1,0 +1,37 @@
+{
+  "mcp_servers": {
+    "core-mcp": {
+      "command": "node",
+      "args": ["core-mcp/dist/index.js"],
+      "required": true,
+      "description": "Core tools including Pyth price feeds and Walrus storage"
+    },
+    "cronos-mcp": {
+      "command": "node", 
+      "args": ["cronos-mcp/dist/index.js"],
+      "required": false,
+      "chains": ["cronos"],
+      "description": "Cronos blockchain tools - VVS Finance, H2Finance, Crypto.com Exchange"
+    },
+    "kaia-mcp": {
+      "command": "node",
+      "args": ["kaia-mcp/dist/index.js"], 
+      "required": false,
+      "chains": ["kaia"],
+      "description": "Kaia blockchain tools - KiloLend, DragonSwap, WKAIA"
+    },
+    "sui-mcp": {
+      "command": "node",
+      "args": ["sui-mcp/dist/index.js"],
+      "required": false, 
+      "chains": ["sui"],
+      "description": "Sui blockchain tools - 7K Aggregator, Scallop, SuiLend, Native Staking"
+    }
+  },
+  "chain_mappings": {
+    "cronos": ["core-mcp", "cronos-mcp"],
+    "kaia": ["core-mcp", "kaia-mcp"], 
+    "sui": ["core-mcp", "sui-mcp"],
+    "aptos": ["core-mcp"]
+  }
+}
