@@ -29,9 +29,10 @@ const AgentCapabilities = () => {
             description: 'DeFi execution and portfolio management on Cronos',
             icon: '/cronos-icon.png',
             tools: [
-                'Moonlander – Trade perpetuals and portfolio management',
-                'Delphi – prediction market participation',
-                'VVS Finance – token swaps and price quotes',
+                // 'Moonlander – Trade perpetuals and portfolio management',
+                // 'Delphi – prediction market participation',
+                'VVS Finance – swaps, liquidity, analytics, quotes',
+                'Crypto.com Exchange – trading pairs and market data',
                 'Cronos X402 protocol integrations'
             ]
         },
