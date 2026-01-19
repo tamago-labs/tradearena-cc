@@ -11,6 +11,9 @@
       "args": ["cronos-mcp/dist/index.js"],
       "required": false,
       "chains": ["cronos"],
+      "env": {
+        "CRONOS_PRIVATE_KEY": "${CRONOS_PRIVATE_KEY}"
+      },
       "description": "Cronos blockchain tools - VVS Finance, H2Finance, Crypto.com Exchange"
     },
     "kaia-mcp": {
@@ -18,6 +21,11 @@
       "args": ["kaia-mcp/dist/index.js"], 
       "required": false,
       "chains": ["kaia"],
+      "env": {
+        "KAIA_PRIVATE_KEY": "${KAIA_PRIVATE_KEY}",
+        "KAIA_RPC_URL": "https://public-en.node.kaia.io",
+        "KAIA_NETWORK": "kaia"
+      },
       "description": "Kaia blockchain tools - KiloLend, DragonSwap, WKAIA"
     },
     "sui-mcp": {
@@ -25,6 +33,9 @@
       "args": ["sui-mcp/dist/index.js"],
       "required": false, 
       "chains": ["sui"],
+      "env": {
+        "SUI_PRIVATE_KEY": "${SUI_PRIVATE_KEY}"
+      },
       "description": "Sui blockchain tools - 7K Aggregator, Scallop, SuiLend, Native Staking"
     }
   },

@@ -6,7 +6,8 @@ Handles multiple MCP clients and tool collection
 import json
 import os
 import logging
-from typing import Dict, List, Any, Optional
+import re
+from typing import Dict, List, Any, Optional, Tuple
 from contextlib import contextmanager
 from strands.tools.mcp import MCPClient
 from mcp import stdio_client, StdioServerParameters
@@ -22,7 +23,39 @@ class MCPManager:
         
         self.config_path = config_path
         self.config = self._load_config()
-        self.active_clients: Dict[str, MCPClient] = {}
+        self.active_clients: Dict[str, Tuple[MCPClient, Any]] = {}  # (client, session)
+        self._load_credentials()
+    
+    def _load_credentials(self) -> None:
+        """Load environment variables from credentials file"""
+        credentials_path = os.path.join(os.getcwd(), "config", "credentials.env")
+        try:
+            if os.path.exists(credentials_path):
+                logger.info(f"Loading credentials from {credentials_path}")
+                with open(credentials_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, value = line.split('=', 1)
+                            os.environ[key.strip()] = value.strip()
+                logger.info("Credentials loaded successfully")
+            else:
+                logger.warning(f"Credentials file not found at {credentials_path}")
+        except Exception as e:
+            logger.error(f"Failed to load credentials: {e}")
+    
+    def _substitute_env_vars(self, text: str) -> str:
+        """Substitute environment variables in text using ${VAR} pattern"""
+        if not isinstance(text, str):
+            return text
+        
+        def replace_var(match):
+            var_name = match.group(1)
+            return os.environ.get(var_name, match.group(0))
+        
+        # Pattern to match ${VARIABLE_NAME}
+        pattern = r'\$\{([^}]+)\}'
+        return re.sub(pattern, replace_var, text)
     
     def _load_config(self) -> Dict[str, Any]:
         """Load MCP configuration from file"""
@@ -48,11 +81,23 @@ class MCPManager:
             return None
         
         try:
-            # Create MCP client using the pattern from the example
+            # Process environment variables and substitutions
+            env_vars = {}
+            if "env" in server_config:
+                for key, value in server_config["env"].items():
+                    env_vars[key] = self._substitute_env_vars(value)
+            
+            # Substitute environment variables in args
+            processed_args = []
+            for arg in server_config["args"]:
+                processed_args.append(self._substitute_env_vars(arg))
+            
+            # Create MCP client with environment variables
             client = MCPClient(lambda: stdio_client(
                 StdioServerParameters(
                     command=server_config["command"],
-                    args=server_config["args"]
+                    args=processed_args,
+                    env=env_vars if env_vars else None
                 )
             ))
             logger.info(f"Created MCP client for {mcp_name}")
@@ -61,43 +106,75 @@ class MCPManager:
             logger.error(f"Failed to create MCP client for {mcp_name}: {e}")
             return None
     
-    @contextmanager
-    def get_mcp_tools(self, trading_chain: str):
-        """Context manager to get all tools for a specific trading chain"""
+    def initialize_mcp_clients(self, trading_chain: str) -> Dict[str, Tuple[MCPClient, Any]]:
+        """Initialize and maintain persistent MCP clients for a trading chain"""
         required_mcps = self.get_required_mcps_for_chain(trading_chain)
-        clients = []
+        persistent_clients = {}
         
-        try:
-            # Create and start all required MCP clients
-            for mcp_name in required_mcps:
+        for mcp_name in required_mcps:
+            if mcp_name in self.active_clients:
+                # Reuse existing client
+                persistent_clients[mcp_name] = self.active_clients[mcp_name]
+                logger.info(f"Reusing existing MCP client for {mcp_name}")
+            else:
+                # Create new persistent client
                 client = self.create_mcp_client(mcp_name)
-                if client:
-                    clients.append((mcp_name, client))
-                    client.__enter__()  # Start the client
-                    logger.info(f"Started MCP client: {mcp_name}")
-                else:
-                    logger.warning(f"Failed to start MCP client: {mcp_name}")
-            
-            # Collect all tools from all clients
-            all_tools = []
-            for mcp_name, client in clients:
+                if not client:
+                    logger.warning(f"Failed to create MCP client: {mcp_name}")
+                    continue
+                
                 try:
-                    tools = client.list_tools_sync()
-                    all_tools.extend(tools)
-                    logger.info(f"Collected {len(tools)} tools from {mcp_name}")
+                    # Start the client and keep the session alive
+                    session = client.__enter__()
+                    persistent_clients[mcp_name] = (client, session)
+                    self.active_clients[mcp_name] = (client, session)
+                    logger.info(f"Initialized persistent MCP client for {mcp_name}")
                 except Exception as e:
-                    logger.error(f"Failed to get tools from {mcp_name}: {e}")
-            
-            yield all_tools
-            
-        finally:
-            # Clean up all clients
-            for mcp_name, client in clients:
+                    logger.error(f"Failed to initialize MCP client {mcp_name}: {e}")
+        
+        return persistent_clients
+    
+    def get_mcp_tools(self, trading_chain: str) -> Tuple[List[Any], Dict[str, Tuple[MCPClient, Any]]]:
+        """Get all tools for a specific trading chain and return persistent clients"""
+        # Initialize persistent clients
+        persistent_clients = self.initialize_mcp_clients(trading_chain)
+        all_tools = []
+        
+        for mcp_name, (client, session) in persistent_clients.items():
+            try:
+                # Extract tools from the persistent session
+                tools = client.list_tools_sync()
+                all_tools.extend(tools)
+                logger.info(f"Successfully collected {len(tools)} tools from {mcp_name}")
+            except Exception as e:
+                logger.error(f"Failed to get tools from {mcp_name}: {e}")
+        
+        return all_tools, persistent_clients
+    
+    def close_clients(self, trading_chain: str = None):
+        """Close MCP clients for a specific chain or all clients"""
+        if trading_chain:
+            # Close specific chain clients
+            required_mcps = self.get_required_mcps_for_chain(trading_chain)
+            for mcp_name in required_mcps:
+                if mcp_name in self.active_clients:
+                    client, session = self.active_clients[mcp_name]
+                    try:
+                        client.__exit__(None, None, None)
+                        logger.info(f"Closed MCP client for {mcp_name}")
+                    except Exception as e:
+                        logger.error(f"Error closing MCP client {mcp_name}: {e}")
+                    finally:
+                        del self.active_clients[mcp_name]
+        else:
+            # Close all clients
+            for mcp_name, (client, session) in self.active_clients.items():
                 try:
                     client.__exit__(None, None, None)
-                    logger.info(f"Stopped MCP client: {mcp_name}")
+                    logger.info(f"Closed MCP client for {mcp_name}")
                 except Exception as e:
-                    logger.error(f"Error stopping MCP client {mcp_name}: {e}")
+                    logger.error(f"Error closing MCP client {mcp_name}: {e}")
+            self.active_clients.clear()
 
 # Global MCP manager instance
 mcp_manager = MCPManager()

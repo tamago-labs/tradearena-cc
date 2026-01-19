@@ -132,6 +132,9 @@ global-dashboard/node_modules/
 .env.test.local
 .env.production.local
 
+# MCP credentials - NEVER commit these files
+config/credentials.env
+
 sessions/
 config/config_agents.json
 old/

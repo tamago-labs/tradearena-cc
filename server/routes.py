@@ -109,20 +109,23 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         boto_session = boto3.Session(region_name=region_name)
         model = BedrockModel(model_id=model_id, boto_session=boto_session)
         
-        # Get MCP tools for this trading chain
-        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
-            all_tools = mcp_tools + [create_custom_view, list_available_views]
-            
-            trading_agent = Agent(
-                name=f"trading_agent_{agent_id}",
-                agent_id=f"trading_agent_{agent_id}",
-                tools=all_tools,
-                model=model,
-                session_manager=session_manager,
-                conversation_manager=conversation_manager,
-                callback_handler=None,
-                state=agent_state
-            )
+        # Get MCP tools for this trading chain with persistent clients
+        mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
+        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        
+        # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
+        # We'll manage them through the MCP manager instead
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=all_tools,
+            model=model,
+            session_manager=session_manager,
+            conversation_manager=conversation_manager,
+            callback_handler=None,
+            state=agent_state
+        )
         
         logger.info(f"Initialized Amazon Bedrock agent: {model_id} in {region_name}")
         return trading_agent, session_id
@@ -141,20 +144,23 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             max_tokens=max_tokens
         )
         
-        # Get MCP tools for this trading chain
-        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
-            all_tools = mcp_tools + [create_custom_view, list_available_views]
-            
-            trading_agent = Agent(
-                name=f"trading_agent_{agent_id}",
-                agent_id=f"trading_agent_{agent_id}",
-                tools=all_tools,
-                model=model,
-                session_manager=session_manager,
-                conversation_manager=conversation_manager,
-                callback_handler=None,
-                state=agent_state
-            )
+        # Get MCP tools for this trading chain with persistent clients
+        mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
+        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        
+        # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
+        # We'll manage them through the MCP manager instead
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=all_tools,
+            model=model,
+            session_manager=session_manager,
+            conversation_manager=conversation_manager,
+            callback_handler=None,
+            state=agent_state
+        )
         
         logger.info(f"Initialized Anthropic agent: {model_id}")
         return trading_agent, session_id
@@ -181,20 +187,23 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             }
         )
         
-        # Get MCP tools for this trading chain
-        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
-            all_tools = mcp_tools + [create_custom_view, list_available_views]
-            
-            trading_agent = Agent(
-                name=f"trading_agent_{agent_id}",
-                agent_id=f"trading_agent_{agent_id}",
-                tools=all_tools,
-                model=model,
-                session_manager=session_manager,
-                conversation_manager=conversation_manager,
-                callback_handler=None,
-                state=agent_state
-            )
+        # Get MCP tools for this trading chain with persistent clients
+        mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
+        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        
+        # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
+        # We'll manage them through the MCP manager instead
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=all_tools,
+            model=model,
+            session_manager=session_manager,
+            conversation_manager=conversation_manager,
+            callback_handler=None,
+            state=agent_state
+        )
         
         logger.info(f"Initialized Gemini agent: {model_id}")
         return trading_agent, session_id
@@ -222,26 +231,44 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             }
         )
         
-        # Get MCP tools for this trading chain
-        with mcp_manager.get_mcp_tools(trading_chain) as mcp_tools:
-            all_tools = mcp_tools + [create_custom_view, list_available_views]
-            
-            trading_agent = Agent(
-                name=f"trading_agent_{agent_id}",
-                agent_id=f"trading_agent_{agent_id}",
-                tools=all_tools,
-                model=model,
-                session_manager=session_manager,
-                conversation_manager=conversation_manager,
-                callback_handler=None,
-                state=agent_state
-            )
+        # Get MCP tools for this trading chain with persistent clients
+        mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
+        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        
+        # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
+        # We'll manage them through the MCP manager instead
+        
+        trading_agent = Agent(
+            name=f"trading_agent_{agent_id}",
+            agent_id=f"trading_agent_{agent_id}",
+            tools=all_tools,
+            model=model,
+            session_manager=session_manager,
+            conversation_manager=conversation_manager,
+            callback_handler=None,
+            state=agent_state
+        )
         
         logger.info(f"Initialized OpenAI Compatible agent: {model_id} (base_url: {base_url or 'default'})")
         return trading_agent, session_id
     
     else:
         raise ValueError(f"Unsupported AI provider: {ai_provider}")
+
+def cleanup_agent_resources(agent_instance: Agent):
+    """Clean up resources associated with an agent"""
+    try:
+        # Get trading chain from agent state to clean up MCP clients
+        agent_state = getattr(agent_instance, 'state', {})
+        trading_chain = agent_state.get("agent_config", {}).get("trading_chain", "unknown")
+        
+        # Clean up MCP clients through the MCP manager
+        if trading_chain and trading_chain != "unknown":
+            logger.info(f"Cleaning up MCP clients for trading chain: {trading_chain}")
+            mcp_manager.close_clients(trading_chain)
+            
+    except Exception as e:
+        logger.error(f"Error during agent cleanup: {e}")
 
 def get_agent_data_for_session(agent_id: str, session_id: str = None) -> dict:
     """
@@ -349,6 +376,7 @@ def setup_routes(app):
         
         print(f"[DEBUG] Agent data retrieved successfully: {agent_data.get('name', 'Unknown')}")
         
+        agent_instance = None
         try:
             # Initialize agent with configuration
             print(f"[DEBUG] Initializing Strands agent...")
@@ -405,6 +433,10 @@ def setup_routes(app):
                     import traceback
                     print(f"[DEBUG] Traceback: {traceback.format_exc()}")
                     yield f"data: [ERROR] {str(e)}\n\n"
+                finally:
+                    # Clean up agent resources when stream ends
+                    if agent_instance:
+                        cleanup_agent_resources(agent_instance)
             
             return StreamingResponse(
                 generate_response(),
@@ -415,6 +447,11 @@ def setup_routes(app):
             print(f"[DEBUG] Agent initialization error: {str(e)}")
             import traceback
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            
+            # Clean up on error
+            if agent_instance:
+                cleanup_agent_resources(agent_instance)
+                
             return {"error": str(e)}
     
     @app.get("/resume-session/{session_id}")
