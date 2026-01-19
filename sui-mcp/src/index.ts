@@ -23,7 +23,6 @@ function createMcpServer(
 
         server.tool(tool.name, tool.description, tool.schema, async (params: any): Promise<any> => {
             try {
-
                 // Execute the handler with the params directly
                 const result = await tool.handler(agent, params);
 

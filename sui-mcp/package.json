@@ -30,7 +30,9 @@
         "claude",
         "web3",
         "scallop",
-        "navi"
+        "navi",
+        "suilend",
+        "7k"
     ],
     "author": "Pisuth",
     "license": "MIT",
@@ -39,11 +41,15 @@
     },
     "homepage": "https://tamagolabs.com",
     "dependencies": {
+        "@7kprotocol/sdk-ts": "^1.3.4", 
         "@modelcontextprotocol/sdk": "^1.10.2",
-        "axios": "^1.10.0",
         "@mysten/sui": "^1.29.0",
         "@mysten/suins": "^0.7.14",
-        "bignumber.js": "^9.3.0",
+        "@suilend/frontend-sui": "^0.2.72",
+        "@suilend/sdk": "^1.1.99",
+        "@suilend/springsui-sdk": "^1.0.28",
+        "axios": "^1.10.0",
+        "bignumber.js": "^9.3.1",
         "dotenv": "^17.2.3",
         "viem": "^2.8.12",
         "zod": "^3.24.3"
