@@ -137,5 +137,6 @@ config/credentials.env
 
 sessions/
 config/config_agents.json
+config/tradearena_settings.json
 old/
 views/

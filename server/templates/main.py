@@ -39,8 +39,8 @@ def main_page_template(agents: list = None) -> str:
                     <div class="menu-item" data-action="manage-agents">
                         <span class="status-indicator {agent_status}"></span>Manage Agents [{status_text}]
                     </div>
-                    <div class="menu-item" data-action="walrus">
-                        <span class="status-indicator online"></span>Walrus Settings
+                    <div class="menu-item" data-action="settings">
+                        <span class="status-indicator online"></span>Settings
                     </div>
                 </div>
             </div>

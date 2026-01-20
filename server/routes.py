@@ -30,8 +30,10 @@ from .templates import (
     create_agent_step2_template,
     create_agent_confirm_template,
     select_agent_for_session_template,
-    chat_session_template
+    chat_session_template,
+    settings_template
 )
+from .settings import settings_manager
 from .agents import agent_manager, AI_PROVIDERS, TRADING_CHAINS
 from .sessions import session_manager
 from .tools import ( 
@@ -48,12 +50,69 @@ def create_conversation_manager() -> SlidingWindowConversationManager:
         should_truncate_results=True  # Fixed truncation setting
     )
 
+def get_tradearena_system_prompt() -> str:
+    """Get the TradeArena System Prompt with conditional Walrus persistence and Web Search"""
+    
+    # Check if Walrus and Web Search are enabled
+    walrus_enabled = settings_manager.is_walrus_enabled()
+    web_search_enabled = settings_manager.is_web_search_enabled()
+    
+    # Part 1: Role & Views (always included)
+    system_prompt = """You are TradeArena Agent, a specialized AI agent for cryptocurrency trading across Cronos, Kaia, and Sui networks.
+
+Core Responsibilities:
+- Execute trades (swaps, lending, borrowing, staking)
+- Analyze market data and risks
+- Optimize protocol selection
+- Manage portfolios effectively
+
+Required Trading Sequence:
+1. Market analysis using available data sources
+2. Risk assessment and position sizing
+3. Protocol and route optimization
+4. Trade execution with verification
+5. Performance documentation
+
+Always provide reasoning and use markdown for clear communication."""
+
+    # Part 2: Walrus Persistence (conditional)
+    if walrus_enabled:
+        system_prompt += """
+
+## Walrus Collective Intelligence
+
+Store all trading activities on Walrus for shared learning:
+- Store trade decisions before execution using `trade_arena_walrus_store`
+- Store results after completion using `trade_arena_walrus_store`
+- Store market analysis insights using `trade_arena_walrus_store`
+
+This enables collective intelligence sharing across all TradeArena agents."""
+
+    # Part 3: Web Search Capability (conditional)
+    if web_search_enabled:
+        system_prompt += """
+
+## Internet Search Capability
+
+You can search the internet for real-time information using `http_request`:
+- Get latest market news and price updates
+- Research project fundamentals and announcements
+- Verify market sentiment and social media trends
+- Access real-time trading data from external sources
+
+Use web search when you need current information that may not be available through blockchain data alone."""
+
+    return system_prompt
+
 def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = None) -> tuple[Agent, str]:
     """Initialize a Strands agent with the given configuration"""
 
     # Extract configuration from agent data
     ai_provider = agent_data.get('ai_provider', 'anthropic')
     config = agent_data.get('config', {})
+    
+    # Get the conditional TradeArena System Prompt
+    system_prompt = get_tradearena_system_prompt()
     
     # Setup logging for this specific agent
     logger = logging.getLogger(f"strands.{agent_id}")
@@ -101,6 +160,19 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
     # Get trading chain for MCP tool selection
     trading_chain = agent_data.get('trading_chain', 'unknown')
     
+    # Check if web search is enabled to add http_request tool
+    web_search_enabled = settings_manager.is_web_search_enabled()
+    
+    # Import http_request tool only if web search is enabled
+    additional_tools = [create_custom_view, list_available_views]
+    if web_search_enabled:
+        try:
+            from strands_tools import http_request
+            additional_tools.append(http_request)
+            logger.info("Web search enabled - added http_request tool")
+        except ImportError:
+            logger.warning("strands_tools not available - web search disabled")
+    
     # Initialize agent based on provider
     if ai_provider == "amazon-bedrock":
         model_id = config.get('model_id', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0')
@@ -111,7 +183,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         
         # Get MCP tools for this trading chain with persistent clients
         mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
-        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        all_tools = mcp_tools + additional_tools
         
         # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
         # We'll manage them through the MCP manager instead
@@ -124,7 +196,8 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             session_manager=session_manager,
             conversation_manager=conversation_manager,
             callback_handler=None,
-            state=agent_state
+            state=agent_state,
+            system_prompt=system_prompt
         )
         
         logger.info(f"Initialized Amazon Bedrock agent: {model_id} in {region_name}")
@@ -146,7 +219,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         
         # Get MCP tools for this trading chain with persistent clients
         mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
-        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        all_tools = mcp_tools + additional_tools
         
         # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
         # We'll manage them through the MCP manager instead
@@ -159,7 +232,8 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             session_manager=session_manager,
             conversation_manager=conversation_manager,
             callback_handler=None,
-            state=agent_state
+            state=agent_state,
+            system_prompt=system_prompt
         )
         
         logger.info(f"Initialized Anthropic agent: {model_id}")
@@ -189,7 +263,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         
         # Get MCP tools for this trading chain with persistent clients
         mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
-        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        all_tools = mcp_tools + additional_tools
         
         # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
         # We'll manage them through the MCP manager instead
@@ -202,7 +276,8 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             session_manager=session_manager,
             conversation_manager=conversation_manager,
             callback_handler=None,
-            state=agent_state
+            state=agent_state,
+            system_prompt=system_prompt
         )
         
         logger.info(f"Initialized Gemini agent: {model_id}")
@@ -233,7 +308,7 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
         
         # Get MCP tools for this trading chain with persistent clients
         mcp_tools, persistent_clients = mcp_manager.get_mcp_tools(trading_chain)
-        all_tools = mcp_tools + [create_custom_view, list_available_views]
+        all_tools = mcp_tools + additional_tools
         
         # Store persistent clients separately (not in agent state to avoid JSON serialization issues)
         # We'll manage them through the MCP manager instead
@@ -246,7 +321,8 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             session_manager=session_manager,
             conversation_manager=conversation_manager,
             callback_handler=None,
-            state=agent_state
+            state=agent_state,
+            system_prompt=system_prompt
         )
         
         logger.info(f"Initialized OpenAI Compatible agent: {model_id} (base_url: {base_url or 'default'})")
@@ -550,7 +626,7 @@ def setup_routes(app):
     
     @app.get("/resume-latest")
     async def resume_latest_session():
-        """Resume the most recent session"""
+        """Resume most recent session"""
         try:
             latest_session = session_manager.get_latest_session()
             if not latest_session:
@@ -754,8 +830,27 @@ def setup_routes(app):
     
     @app.get("/walrus")
     async def walrus():
-        """Walrus settings page"""
-        return HTMLResponse(walrus_settings_template())
+        """Walrus settings page (legacy - redirected to settings)"""
+        return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head><title>Redirecting...</title></head>
+<body>
+<script>window.location.href = '/settings';</script>
+</body>
+</html>
+        """)
+    
+    @app.get("/settings")
+    async def settings():
+        """Settings page with Walrus configuration"""
+        try:
+            config = settings_manager.load_settings()
+            return HTMLResponse(settings_template(config))
+        except Exception as e:
+            print(f"[DEBUG] Error loading settings: {e}")
+            # Return settings page with default config on error
+            return HTMLResponse(settings_template())
     
     @app.get("/agents")
     async def agents():
@@ -856,3 +951,29 @@ def setup_routes(app):
 </body>
 </html>
             """)
+    
+    # Settings API Endpoints
+    @app.post("/api/settings/save")
+    async def save_settings(request: Request):
+        """Save settings API endpoint"""
+        try:
+            settings_data = await request.json()
+            success = settings_manager.save_settings(settings_data)
+            
+            if success:
+                return {"success": True, "message": "Settings saved successfully"}
+            else:
+                return {"success": False, "error": "Failed to save settings"}
+        except Exception as e:
+            print(f"[DEBUG] Error saving settings: {e}")
+            return {"success": False, "error": str(e)}
+    
+    @app.get("/api/settings/load")
+    async def load_settings():
+        """Load settings API endpoint"""
+        try:
+            settings = settings_manager.load_settings()
+            return {"success": True, "settings": settings}
+        except Exception as e:
+            print(f"[DEBUG] Error loading settings: {e}")
+            return {"success": False, "error": str(e)}

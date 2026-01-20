@@ -257,8 +257,8 @@ class TerminalMenu {
             case 'manage-agents':
                 window.location.href = '/manage-agents';
                 break;
-            case 'walrus':
-                window.location.href = '/walrus';
+            case 'settings':
+                window.location.href = '/settings';
                 break;
         }
     }

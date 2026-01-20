@@ -28,6 +28,7 @@ from .interactive import (
 )
 from .views import views_page_template
 from .walrus import walrus_settings_template
+from .settings import settings_template
 
 __all__ = [
     # Base templates
@@ -55,4 +56,7 @@ __all__ = [
     
     # Walrus templates
     'walrus_settings_template',
+    
+    # Settings templates
+    'settings_template',
 ]
