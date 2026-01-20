@@ -545,6 +545,22 @@ async function sendMessage() {{
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'Send';
                 currentMessageElement = null;
+                
+                // Navigate to resume session to get clean conversation from sessions
+                console.log('[DEBUG] Streaming completed, navigating to resume session for clean conversation...');
+                setTimeout(() => {{
+                    // Use currentSessionId if available, otherwise use the one from URL
+                    let sessionIdToUse = currentSessionId || extractSessionIdFromURL();
+                    if (sessionIdToUse) {{
+                        // Clean session ID by removing any trailing ] character
+                        sessionIdToUse = sessionIdToUse.replace(/\]$/, '');
+                        console.log('[DEBUG] Navigating to resume session with cleaned ID:', sessionIdToUse);
+                        window.location.href = '/resume-session/' + sessionIdToUse;
+                    }} else {{
+                        console.log('[DEBUG] No session ID available, falling back to reload');
+                        window.location.reload();
+                    }}
+                }}, 2000); // 2 second delay to allow users to see the completed message
             }} else if (data.startsWith('[ERROR]')) {{
                 const errorMsg = data.substring(7); // Remove '[ERROR]' prefix
                 updateStreamingMessage(`Error: ${{errorMsg}}`);
@@ -624,6 +640,15 @@ function deleteSession() {{
 // Focus input on load and initialize session ID
 document.addEventListener('DOMContentLoaded', function() {{
     document.getElementById('chatInput').focus();
+    
+    // Scroll to bottom of chat after page reload
+    setTimeout(() => {{
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {{
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log('[DEBUG] Scrolled to bottom after reload');
+        }}
+    }}, 100); // Small delay to ensure content is rendered
     
     // Extract session ID from URL if available (for resumed sessions)
     const urlSessionId = extractSessionIdFromURL();

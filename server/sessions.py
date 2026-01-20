@@ -113,7 +113,11 @@ class SessionManager:
                     "updated_at": message_data.get("updated_at")
                 }
                 
-                messages.append(formatted_message)
+                # Only add messages with actual content (filter out blank/empty messages)
+                if text_content and text_content.strip():
+                    messages.append(formatted_message)
+                else:
+                    logger.debug(f"Skipping blank message: {message_data.get('message_id')}")
             except Exception as e:
                 logger.error(f"Error loading message {message_file}: {e}")
                 continue
