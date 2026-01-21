@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { networkInfo } from '../config';
+import BigNumber from 'bignumber.js';
 
 const VVS_API_BASE = 'https://api.vvs.finance/info/api';
-const HARDCODED_CRO_PRICE = 0.1; // Fixed CRO price in USD
 
 export interface VVSPair {
     pairId: string;
@@ -14,14 +14,16 @@ export interface VVSPair {
     liquidity_CRO: number;
     base_volume: number;
     quote_volume: number;
+    base_volume_usd: number;
+    quote_volume_usd: number;
     price: number;
     hasWCRO: boolean;
     isStablePair: boolean;
-    dataQuality: {
-        hasValidLiquidity: boolean;
-        hasValidPrice: boolean;
-        hasVolume: boolean;
-    };
+    // dataQuality: {
+    //     hasValidLiquidity: boolean;
+    //     hasValidPrice: boolean;
+    //     hasVolume: boolean;
+    // };
     formatted: {
         liquidityUSD: string;
         liquidityCRO: string;
@@ -68,15 +70,28 @@ export interface VVSData {
 
 export class VVSAnalytics {
     private network: string;
+    private readonly PAIRS_NO_WEI_CONVERSION = [
+        '0x66e428c3f67a68878562e79A0234c1F83c208770_0xc21223249CA28397B4B6541dfFaEcC539BfF0c59',
+        '0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23_0xc21223249CA28397B4B6541dfFaEcC539BfF0c59',
+        '0x7a7c9db510aB29A2FC362a4c34260BEcB5cE3446_0xe44Fd7fCb2b1581822D0c862B68222998a0c299a',
+        '0x2D03bECE6747ADC00E1a131BBA1469C15fD11e03_0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'
+    ];
 
     constructor() {
         this.network = 'cronos'; // Fixed since networkInfo doesn't have a 'name' property
     }
 
-    // Get hardcoded CRO price
-    private async fetchCROPrice(): Promise<number> {
-        return HARDCODED_CRO_PRICE;
+    private shouldSkipWeiConversion(pairId: string): boolean {
+        return this.PAIRS_NO_WEI_CONVERSION.includes(pairId);
     }
+
+    private sanitizeValue(pairId: string, value: any): number {
+        if (this.shouldSkipWeiConversion(pairId)) {
+            return this.sanitizeNumber(value);
+        }
+        return this.sanitizeAndConvert(value);
+    }
+ 
 
     // Data validation and sanitization
     private sanitizeNumber(value: any): number {
@@ -97,6 +112,25 @@ export class VVSAnalytics {
         return 0;
     }
 
+    // BigNumber utility functions for precise wei/ether conversions
+    private weiToEther(weiValue: string | number): number {
+        try {
+            const wei = new BigNumber(weiValue.toString().split(".")[0]);
+            return wei.dividedBy(1e18).toNumber();
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    private sanitizeAndConvert(value: any): number {
+        try {
+            const sanitized = this.sanitizeNumber(value.toString().split(".")[0]);
+            return new BigNumber(sanitized).dividedBy(1e18).toNumber();
+        } catch (error) {
+            return 0;
+        }
+    }
+
     private isValidLiquidityValue(value: number): boolean {
         // Reasonable liquidity should be between $0.000001 and $1B for most pairs
         return value >= 0.000001 && value <= 1e9;
@@ -107,10 +141,32 @@ export class VVSAnalytics {
         return value >= 0.000001 && value <= 100000;
     }
 
-    async getPairs(limit: number = 100): Promise<VVSData> {
+    private async getTokenPriceMap(): Promise<Map<string, number>> {
         try {
-            // Get CRO price for conversion
-            const croPrice = await this.fetchCROPrice();
+            const tokensResult = await this.getTokens(1000);
+            const priceMap = new Map<string, number>();
+            
+            if (tokensResult.status === 'success' && tokensResult.data?.tokens) {
+                tokensResult.data.tokens.forEach(token => {
+                    priceMap.set(token.address.toLowerCase(), token.price);
+                });
+            }
+            
+            return priceMap;
+        } catch (error) {
+            return new Map<string, number>();
+        }
+    }
+
+    private isStableToken(symbol: string): boolean {
+        const stableTokens = ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'FRAX'];
+        return stableTokens.includes(symbol?.toUpperCase() || '');
+    }
+
+    async getPairs(limit: number = 1000): Promise<VVSData> {
+        try { 
+            // Get token prices first for USD conversion
+            const tokenPriceMap = await this.getTokenPriceMap();
 
             const response = await axios.get(`${VVS_API_BASE}/pairs`, {
                 timeout: 30000 // 30 seconds for slow VVS API
@@ -118,27 +174,57 @@ export class VVSAnalytics {
             const data = response.data;
 
             let pairs = Object.entries(data.data || {});
+
             if (limit && pairs.length > limit) {
                 pairs = pairs.slice(0, limit);
             }
 
             const pairAnalysis = pairs.map(([pairId, pairData]: [string, any]) => {
-                // Sanitize all numerical values
-                let liquidityCRO = this.sanitizeNumber(pairData.liquidity_CRO);
-                let baseVolume = this.sanitizeNumber(pairData.base_volume) / 1e18; // Convert from wei
-                let quoteVolume = this.sanitizeNumber(pairData.quote_volume) / 1e18; // Convert from wei
-                let price = this.sanitizeNumber(pairData.price);
+                // Sanitize all numerical values using conditional conversion based on pair ID
+                let liquidity = this.sanitizeValue(pairId, pairData.liquidity);
+                let liquidityCRO = this.sanitizeValue(pairId, pairData.liquidity_CRO);
+                let baseVolume = this.sanitizeValue(pairId, pairData.base_volume); // Convert from wei if needed
+                let quoteVolume = this.sanitizeValue(pairId, pairData.quote_volume); // Convert from wei if needed
+                let price = this.sanitizeValue(pairId, pairData.price);
 
-                // Smart detection: Check if liquidity_CRO is in wei or CRO format
-                let actualCRO = liquidityCRO / 1e18;
-                let liquidityUSD = actualCRO * croPrice; // Convert to USD
+                // Get USD prices for base and quote tokens
+                const baseTokenUSDPrice = tokenPriceMap.get(pairData.base_address?.toLowerCase() || '') || 0;
+                const quoteTokenUSDPrice = tokenPriceMap.get(pairData.quote_address?.toLowerCase() || '') || 0;
 
+                // Convert volumes to USD
+                let baseVolumeUSD = 0;
+                let quoteVolumeUSD = 0;
 
-                price = price / 1e18; // Convert from 18 decimals
+                // Handle base volume USD conversion
+                if (baseTokenUSDPrice > 0) {
+                    baseVolumeUSD = baseVolume * baseTokenUSDPrice;
+                } else if (price > 0 && quoteTokenUSDPrice > 0) {
+                    // If base token has no USD price, use: base_volume * price * quote_token_usd_price
+                    baseVolumeUSD = baseVolume * price * quoteTokenUSDPrice;
+                }
 
+                // Handle quote volume USD conversion
+                if (quoteTokenUSDPrice > 0) {
+                    quoteVolumeUSD = quoteVolume * quoteTokenUSDPrice;
+                } else if (price > 0 && baseTokenUSDPrice > 0) {
+                    // If quote token has no USD price, use: quote_volume * (1/price) * base_token_usd_price
+                    quoteVolumeUSD = quoteVolume * (1 / price) * baseTokenUSDPrice;
+                }
 
-                 
- 
+                // Special handling for stable pairs where one token is already USD
+                if (this.isStableToken(pairData.quote_symbol)) {
+                    quoteVolumeUSD = quoteVolume; // Quote volume is already in USD
+                    if (price > 0 && baseTokenUSDPrice === 0) {
+                        baseVolumeUSD = baseVolume * price; // Use price to convert base to USD
+                    }
+                } else if (this.isStableToken(pairData.base_symbol)) {
+                    baseVolumeUSD = baseVolume; // Base volume is already in USD
+                    if (price > 0 && quoteTokenUSDPrice === 0) {
+                        quoteVolumeUSD = quoteVolume / price; // Use price to convert quote to USD
+                    }
+                }
+
+                const totalVolumeUSD = baseVolumeUSD + quoteVolumeUSD;
 
                 return {
                     pairId,
@@ -146,36 +232,29 @@ export class VVSAnalytics {
                     quote_symbol: pairData.quote_symbol,
                     base_address: pairData.base_address,
                     quote_address: pairData.quote_address,
-                    liquidity: liquidityUSD,
-                    liquidity_CRO: actualCRO,
+                    liquidity: liquidity,
+                    liquidity_CRO: liquidityCRO,
                     base_volume: baseVolume,
                     quote_volume: quoteVolume,
+                    base_volume_usd: baseVolumeUSD,
+                    quote_volume_usd: quoteVolumeUSD,
                     price,
                     hasWCRO: pairId.includes('0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'),
-                    isStablePair: this.isStablePair(pairData),
-                    dataQuality: {
-                        hasValidLiquidity: liquidityUSD > 0 && this.isValidLiquidityValue(liquidityUSD),
-                        hasValidPrice: price > 0 && this.isValidPrice(price),
-                        hasVolume: baseVolume > 0 || quoteVolume > 0
-                    },
+                    isStablePair: this.isStablePair(pairData), 
                     formatted: {
-                        liquidityUSD: this.formatCurrency(liquidityUSD),
-                        liquidityCRO: this.formatTokenAmount(actualCRO),
-                        baseVolume: this.formatCurrency(baseVolume),
-                        quoteVolume: this.formatCurrency(quoteVolume),
-                        totalVolume: this.formatCurrency(baseVolume + quoteVolume),
+                        liquidityUSD: this.formatCurrency(liquidity),
+                        liquidityCRO: this.formatTokenAmount(liquidityCRO),
+                        baseVolume: this.formatCurrency(baseVolumeUSD),
+                        quoteVolume: this.formatCurrency(quoteVolumeUSD),
+                        totalVolume: this.formatCurrency(totalVolumeUSD),
                         price: this.formatPrice(price, pairData.quote_symbol)
                     }
                 };
             });
-
-            // Filter out pairs with invalid data
-            const validPairs = pairAnalysis.filter(pair =>
-                pair.dataQuality.hasValidLiquidity || pair.dataQuality.hasVolume
-            );
+ 
 
             // Sort by valid liquidity
-            const sortedPairs = validPairs.sort((a, b) =>
+            const sortedPairs = pairAnalysis.sort((a, b) =>
                 (b.liquidity || 0) - (a.liquidity || 0)
             );
 
@@ -185,9 +264,9 @@ export class VVSAnalytics {
                     pairs: sortedPairs,
                     updated_at: data.updated_at,
                     summary: {
-                        totalPairs: validPairs.length,
+                        totalPairs: sortedPairs.length,
                         totalLiquidityUSD: sortedPairs.reduce((sum, pair) => sum + (pair.liquidity || 0), 0),
-                        totalVolumeUSD: sortedPairs.reduce((sum, pair) => sum + (pair.base_volume || 0) + (pair.quote_volume || 0), 0),
+                        totalVolumeUSD: sortedPairs.reduce((sum, pair) => sum + (pair.base_volume_usd || 0) + (pair.quote_volume_usd || 0), 0),
                         wcroPairs: sortedPairs.filter(pair => pair.hasWCRO).length,
                         stablePairs: sortedPairs.filter(p => p.isStablePair).length
                     }
@@ -205,7 +284,7 @@ export class VVSAnalytics {
         }
     }
 
-    async getTokens(limit: number = 100): Promise<VVSData> {
+    async getTokens(limit: number = 500): Promise<VVSData> {
         try {
             const response = await axios.get(`${VVS_API_BASE}/tokens`);
             const data = response.data;
@@ -362,14 +441,14 @@ export class VVSAnalytics {
 
             const sortedPairs = pairsResult.data.pairs.sort((a, b) => {
                 if (sortBy === 'volume') {
-                    return (b.base_volume + b.quote_volume) - (a.base_volume + a.quote_volume);
+                    return (b.base_volume_usd + b.quote_volume_usd) - (a.base_volume_usd + a.quote_volume_usd);
                 }
                 return (b.liquidity || 0) - (a.liquidity || 0);
             }).slice(0, limit);
 
             const analytics = {
                 totalLiquidityInTopPairs: sortedPairs.reduce((sum, pair) => sum + (pair.liquidity || 0), 0),
-                totalVolumeInTopPairs: sortedPairs.reduce((sum, pair) => sum + (pair.base_volume || 0) + (pair.quote_volume || 0), 0),
+                totalVolumeInTopPairs: sortedPairs.reduce((sum, pair) => sum + (pair.base_volume_usd || 0) + (pair.quote_volume_usd || 0), 0),
                 wcroPairs: sortedPairs.filter(pair => pair.hasWCRO).length,
                 stablePairs: sortedPairs.filter(p => p.isStablePair).length,
                 averageLiquidity: sortedPairs.reduce((sum, pair) => sum + (pair.liquidity || 0), 0) / sortedPairs.length
