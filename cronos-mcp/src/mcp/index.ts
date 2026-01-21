@@ -29,6 +29,15 @@ import {
   CronosGetMarketSummaryTool
 } from './crypto-com-exchange/get_exchange_tools';
 
+// Import X402 tools
+import {
+  cronos_x402_payment,
+  cronos_x402_verify_payment,
+  cronos_x402_check_entitlement,
+  cronos_x402_list_payments,
+  cronos_x402_get_supported
+} from './x402';
+
 // Combine all VVS tools
 const VVSTools = {
   // VVS Analytics tools
@@ -57,6 +66,15 @@ const ExchangeTools = {
   cronos_get_market_summary: CronosGetMarketSummaryTool,
 };
 
+// Combine all X402 tools
+const X402Tools = {
+  cronos_x402_payment,
+  cronos_x402_verify_payment,
+  cronos_x402_check_entitlement,
+  cronos_x402_list_payments,
+  cronos_x402_get_supported
+};
+
 export const CronosTools = {
   // Basic wallet information and account management
   ...WalletTools,
@@ -69,9 +87,13 @@ export const CronosTools = {
   
   // Crypto.com Exchange tools
   ...ExchangeTools,
+  
+  // X402 Payment tools
+  ...X402Tools,
 }
 
 // Export individual modules for direct access
 export * from './wallet';
 export * from './defi/get_defi_tools';
 export * from './crypto-com-exchange/get_exchange_tools';
+export * from './x402';
