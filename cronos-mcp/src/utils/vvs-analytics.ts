@@ -2,6 +2,7 @@ import axios from 'axios';
 import { networkInfo } from '../config';
 
 const VVS_API_BASE = 'https://api.vvs.finance/info/api';
+const HARDCODED_CRO_PRICE = 0.1; // Fixed CRO price in USD
 
 export interface VVSPair {
     pairId: string;
@@ -72,18 +73,23 @@ export class VVSAnalytics {
         this.network = 'cronos'; // Fixed since networkInfo doesn't have a 'name' property
     }
 
+    // Get hardcoded CRO price
+    private async fetchCROPrice(): Promise<number> {
+        return HARDCODED_CRO_PRICE;
+    }
+
     // Data validation and sanitization
     private sanitizeNumber(value: any): number {
         if (typeof value === 'string') {
             const num = parseFloat(value);
             // Check for absurd values that indicate data corruption
-            if (isNaN(num) || !isFinite(num) || num > 1e15) {
+            if (isNaN(num) || !isFinite(num) || num > 1e30) {
                 return 0; // Return 0 for corrupted data
             }
             return num;
         }
         if (typeof value === 'number') {
-            if (isNaN(value) || !isFinite(value) || value > 1e15) {
+            if (isNaN(value) || !isFinite(value) || value > 1e30) {
                 return 0;
             }
             return value;
@@ -92,8 +98,8 @@ export class VVSAnalytics {
     }
 
     private isValidLiquidityValue(value: number): boolean {
-        // Reasonable liquidity should be between $1 and $1B for most pairs
-        return value >= 1 && value <= 1e9;
+        // Reasonable liquidity should be between $0.000001 and $1B for most pairs
+        return value >= 0.000001 && value <= 1e9;
     }
 
     private isValidPrice(value: number): boolean {
@@ -103,7 +109,12 @@ export class VVSAnalytics {
 
     async getPairs(limit: number = 100): Promise<VVSData> {
         try {
-            const response = await axios.get(`${VVS_API_BASE}/pairs`);
+            // Get CRO price for conversion
+            const croPrice = await this.fetchCROPrice();
+
+            const response = await axios.get(`${VVS_API_BASE}/pairs`, {
+                timeout: 30000 // 30 seconds for slow VVS API
+            });
             const data = response.data;
 
             let pairs = Object.entries(data.data || {});
@@ -113,30 +124,21 @@ export class VVSAnalytics {
 
             const pairAnalysis = pairs.map(([pairId, pairData]: [string, any]) => {
                 // Sanitize all numerical values
-                let liquidityUSD = this.sanitizeNumber(pairData.liquidity);
                 let liquidityCRO = this.sanitizeNumber(pairData.liquidity_CRO);
-                let baseVolume = this.sanitizeNumber(pairData.base_volume);
-                let quoteVolume = this.sanitizeNumber(pairData.quote_volume);
+                let baseVolume = this.sanitizeNumber(pairData.base_volume) / 1e18; // Convert from wei
+                let quoteVolume = this.sanitizeNumber(pairData.quote_volume) / 1e18; // Convert from wei
                 let price = this.sanitizeNumber(pairData.price);
 
-                // Additional validation for VVS-specific issues
-                if (!this.isValidLiquidityValue(liquidityUSD)) {
-                    console.warn(`Invalid liquidity for pair ${pairId}: ${liquidityUSD}, setting to 0`);
-                    liquidityUSD = 0;
-                }
+                // Smart detection: Check if liquidity_CRO is in wei or CRO format
+                let actualCRO = liquidityCRO / 1e18;
+                let liquidityUSD = actualCRO * croPrice; // Convert to USD
 
-                if (!this.isValidPrice(price)) {
-                    console.warn(`Invalid price for pair ${pairId}: ${price}, setting to 0`);
-                    price = 0;
-                }
 
-                // Convert from wei if values are too large (common VVS issue)
-                if (liquidityUSD > 1e12) {
-                    liquidityUSD = liquidityUSD / 1e18; // Convert from wei
-                }
-                if (liquidityCRO > 1e12) {
-                    liquidityCRO = liquidityCRO / 1e18;
-                }
+                price = price / 1e18; // Convert from 18 decimals
+
+
+                 
+ 
 
                 return {
                     pairId,
@@ -145,7 +147,7 @@ export class VVSAnalytics {
                     base_address: pairData.base_address,
                     quote_address: pairData.quote_address,
                     liquidity: liquidityUSD,
-                    liquidity_CRO: liquidityCRO,
+                    liquidity_CRO: actualCRO,
                     base_volume: baseVolume,
                     quote_volume: quoteVolume,
                     price,
@@ -158,22 +160,22 @@ export class VVSAnalytics {
                     },
                     formatted: {
                         liquidityUSD: this.formatCurrency(liquidityUSD),
-                        liquidityCRO: this.formatTokenAmount(liquidityCRO),
+                        liquidityCRO: this.formatTokenAmount(actualCRO),
                         baseVolume: this.formatCurrency(baseVolume),
                         quoteVolume: this.formatCurrency(quoteVolume),
                         totalVolume: this.formatCurrency(baseVolume + quoteVolume),
-                        price: this.formatPrice(price)
+                        price: this.formatPrice(price, pairData.quote_symbol)
                     }
                 };
             });
 
             // Filter out pairs with invalid data
-            const validPairs = pairAnalysis.filter(pair => 
+            const validPairs = pairAnalysis.filter(pair =>
                 pair.dataQuality.hasValidLiquidity || pair.dataQuality.hasVolume
             );
 
             // Sort by valid liquidity
-            const sortedPairs = validPairs.sort((a, b) => 
+            const sortedPairs = validPairs.sort((a, b) =>
                 (b.liquidity || 0) - (a.liquidity || 0)
             );
 
@@ -216,7 +218,7 @@ export class VVSAnalytics {
             const tokenAnalysis = tokens.map(([address, tokenData]: [string, any]) => {
                 let priceUSD = this.sanitizeNumber(tokenData.price);
                 let priceCRO = this.sanitizeNumber(tokenData.price_CRO);
-                
+
                 // Validate prices
                 if (!this.isValidPrice(priceUSD)) {
                     priceUSD = 0;
@@ -241,8 +243,8 @@ export class VVSAnalytics {
                         hasValidCROPrice: priceCRO > 0 && this.isValidPrice(priceCRO)
                     },
                     formatted: {
-                        priceUSD: this.formatPrice(priceUSD),
-                        priceCRO: this.formatPrice(priceCRO),
+                        priceUSD: this.formatCurrency(priceUSD), // Token USD prices should be formatted as currency
+                        priceCRO: this.formatPrice(priceCRO, 'CRO'), // CRO prices should show quote token
                         volume24h: tokenData.volume24h ? this.formatCurrency(this.sanitizeNumber(tokenData.volume24h)) : undefined,
                         marketCap: tokenData.marketCap ? this.formatCurrency(this.sanitizeNumber(tokenData.marketCap)) : undefined
                     }
@@ -250,7 +252,7 @@ export class VVSAnalytics {
             });
 
             // Filter valid tokens
-            const validTokens = tokenAnalysis.filter(token => 
+            const validTokens = tokenAnalysis.filter(token =>
                 token.dataQuality.hasValidUSDPrice || token.dataQuality.hasValidCROPrice
             );
 
@@ -318,12 +320,12 @@ export class VVSAnalytics {
     async getTokenInfo(tokenAddress: string): Promise<VVSData> {
         try {
             const tokensResult = await this.getTokens(1000);
-            
+
             if (tokensResult.status !== 'success' || !tokensResult.data?.tokens) {
                 throw new Error('Failed to fetch tokens data');
             }
 
-            const token = tokensResult.data.tokens.find(t => 
+            const token = tokensResult.data.tokens.find(t =>
                 t.address.toLowerCase() === tokenAddress.toLowerCase()
             );
 
@@ -353,7 +355,7 @@ export class VVSAnalytics {
     async getTopPairs(limit: number = 10, sortBy: 'liquidity' | 'volume' = 'liquidity'): Promise<VVSData> {
         try {
             const pairsResult = await this.getPairs(1000);
-            
+
             if (pairsResult.status !== 'success' || !pairsResult.data?.pairs) {
                 throw new Error('Failed to fetch pairs data');
             }
@@ -372,7 +374,7 @@ export class VVSAnalytics {
                 stablePairs: sortedPairs.filter(p => p.isStablePair).length,
                 averageLiquidity: sortedPairs.reduce((sum, pair) => sum + (pair.liquidity || 0), 0) / sortedPairs.length
             };
-            
+
             return {
                 status: 'success',
                 data: {
@@ -397,12 +399,12 @@ export class VVSAnalytics {
     // Enhanced formatting methods with better validation
     private formatTokenAmount(amount: number | string): string {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-        
+
         if (!isFinite(num) || isNaN(num) || num <= 0) return '0';
-        
-        // Don't divide by 1e18 if already a reasonable number
-        const value = num > 1e15 ? num / 1e18 : num;
-        
+
+        // Use the number directly - it's already in correct units after wei conversion
+        const value = num;
+
         if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
         if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
         if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
@@ -412,7 +414,7 @@ export class VVSAnalytics {
 
     private formatCurrency(amount: number): string {
         if (!isFinite(amount) || isNaN(amount) || amount <= 0) return '$0.00';
-        
+
         if (amount >= 1e12) return `$${(amount / 1e12).toFixed(2)}T`;
         if (amount >= 1e9) return `$${(amount / 1e9).toFixed(2)}B`;
         if (amount >= 1e6) return `$${(amount / 1e6).toFixed(2)}M`;
@@ -422,21 +424,30 @@ export class VVSAnalytics {
         return `$${amount.toFixed(8)}`;
     }
 
-    private formatPrice(price: number): string {
-        if (!isFinite(price) || isNaN(price) || price <= 0) return '$0.00';
-        
-        if (price >= 1000) return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        if (price >= 1) return `$${price.toFixed(4)}`;
-        if (price >= 0.0001) return `$${price.toFixed(6)}`;
-        if (price > 0) return `$${price.toFixed(8)}`;
-        return '$0.00';
+    private formatPrice(price: number, quoteSymbol: string = ''): string {
+        if (!isFinite(price) || isNaN(price) || price <= 0) return `0${quoteSymbol ? ' ' + quoteSymbol : ''}`;
+
+        let formattedPrice: string;
+        if (price >= 1000) {
+            formattedPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if (price >= 1) {
+            formattedPrice = price.toFixed(4);
+        } else if (price >= 0.0001) {
+            formattedPrice = price.toFixed(6);
+        } else if (price > 0) {
+            formattedPrice = price.toFixed(8);
+        } else {
+            return `0${quoteSymbol ? ' ' + quoteSymbol : ''}`;
+        }
+
+        return `${formattedPrice}${quoteSymbol ? ' ' + quoteSymbol : ''}`;
     }
 
     private isStablePair(pairData: any): boolean {
         const stableTokens = ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'FRAX'];
         const baseSymbol = pairData.base_symbol?.toUpperCase() || '';
         const quoteSymbol = pairData.quote_symbol?.toUpperCase() || '';
-        
+
         return stableTokens.includes(baseSymbol) || stableTokens.includes(quoteSymbol);
     }
 }
