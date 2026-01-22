@@ -9,34 +9,32 @@ const CustomViews = () => {
 
     const dashboardTypes = [
         {
-            title: "Portfolio Overview",
-            description: "Multi-chain wallet balances and asset allocation charts with real-time tracking across all your trading accounts.",
-            badge: "Balance Tracking",
-            icon: "💼"
+            title: "Market Macro Analysis",
+            description: "Your agent visualizes global market trends, researches opportunities, and creates interactive charts that compare market movements with your portfolio to surface lucrative DeFi opportunities.",
+            badge: "Market Visualizer",
+            icon: "🧠",
+            image: "/screenshots/market.png"
         },
         {
-            title: "Strategy Performance",
-            description: "Win rates, P&L charts, and detailed strategy comparisons with AI-powered performance insights.",
-            badge: "Performance Metrics",
-            icon: "📈"
+            title: "Wallet Overview",
+            description: "Your agent consolidates all your assets across chains into one intuitive view, giving you instant clarity on your complete DeFi portfolio composition.",
+            badge: "Portfolio Tracker",
+            icon: "💼",
+            image: "/screenshots/wallet.png"
         },
         {
-            title: "Market Intelligence",
-            description: "Real-time market data feeds with AI-generated insights, trend analysis, and opportunity detection.",
-            badge: "Market Analysis",
-            icon: "🧠"
-        },
-        {
-            title: "Risk Analysis",
-            description: "Exposure metrics, volatility indicators, and stress testing to keep your trading strategy within risk limits.",
-            badge: "Risk Management",
-            icon: "🛡️"
-        },
+            title: "Lending Portfolio Health Dashboard",
+            description: "Your agent monitors your lending positions 24/7, tracking health factors, liquidation risks, and optimization opportunities to maximize your yields safely.",
+            badge: "Risk Monitor",
+            icon: "📈",
+            image: "/screenshots/kilolend.png"
+        }, 
         {
             title: "Custom Analytics",
-            description: "Any visualization you can describe - let your AI agent create personalized charts and analytics unique to your needs.",
-            badge: "Unlimited Views",
-            icon: "🎨"
+            description: "Describe any analysis you want, and watch your agent build custom visualizations, metrics, and dashboards tailored to your specific DeFi questions.",
+            badge: "Unlimited Custom Views",
+            icon: "🎨",
+            image: "/screenshots/custom-2.png"
         }
     ];
 
@@ -110,21 +108,21 @@ const CustomViews = () => {
                         >
                             {/* Screenshot */}
                             <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900" style={{ minHeight: '300px' }}>
-                                <div className="relative w-full h-[300px]">
+                                <div className="relative w-full h-[500px]">
                                     <img
-                                        src="/screenshot-1.png"
+                                        src={ dashboardTypes[activeTab].image || "/screenshot-1.png" }
                                         alt={dashboardTypes[activeTab].title}
                                         className="absolute inset-0 w-full h-full object-cover"
                                         style={{ display: 'block' }}
                                     />
                                     {/* Dashboard Type Overlay */}
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    {/* <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                                         <div className="text-center text-white">
                                             <div className="text-5xl mb-3">{dashboardTypes[activeTab].icon}</div>
                                             <div className="font-semibold text-lg">{dashboardTypes[activeTab].title}</div>
                                             <div className="text-sm opacity-70 mt-1">{dashboardTypes[activeTab].badge}</div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
