@@ -10,7 +10,7 @@ interface DemoModalProps {
 
 const DemoModal: React.FC<DemoModalProps> = ({ isOpen, onClose }) => {
     const handleContinueToDemo = () => {
-        window.open('https://demo.tradearena.cc', '_blank', 'noopener,noreferrer');
+        window.open('https://9zzeuspqvi.ap-southeast-1.awsapprunner.com/', '_blank', 'noopener,noreferrer');
         onClose();
     };
 
