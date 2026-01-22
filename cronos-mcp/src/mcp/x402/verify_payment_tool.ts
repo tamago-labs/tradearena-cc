@@ -107,7 +107,7 @@ export const cronos_x402_verify_payment: McpTool = {
         at: Date.now(),
         payTo: paymentRequirements.payTo,
         amount: paymentRequirements.maxAmountRequired,
-        asset: paymentRequirements.asset || 'CRO',
+        asset: paymentRequirements.asset || 'USDC.e',
         network: paymentRequirements.network,
       };
       

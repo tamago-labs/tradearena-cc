@@ -34,8 +34,7 @@ import {
   cronos_x402_payment,
   cronos_x402_verify_payment,
   cronos_x402_check_entitlement,
-  cronos_x402_list_payments,
-  cronos_x402_get_supported
+  cronos_x402_list_payments
 } from './x402';
 
 // Combine all VVS tools
@@ -71,8 +70,7 @@ const X402Tools = {
   cronos_x402_payment,
   cronos_x402_verify_payment,
   cronos_x402_check_entitlement,
-  cronos_x402_list_payments,
-  cronos_x402_get_supported
+  cronos_x402_list_payments
 };
 
 export const CronosTools = {

@@ -8,11 +8,8 @@ import * as crypto from 'node:crypto';
 // Schema for payment request
 export const PaymentRequestSchema = z.object({
   to: z.string().describe('Recipient address to pay'),
-  value: z.string().describe('Amount to pay in base units (e.g., 1000000 for 1 USDC)'),
-  description: z.string().optional().describe('Payment description'),
-  asset: z.string().optional().describe('Token contract address (optional, uses native CRO if not provided)'),
-  validBefore: z.number().optional().describe('Unix timestamp when payment expires (optional)'),
-  validAfter: z.number().optional().describe('Unix timestamp when payment becomes valid (optional)'),
+  value: z.string().describe('Amount to pay in base units (e.g., 1000000 for 1 USDC.e)'),
+  description: z.string().optional().describe('Payment description')
 });
 
 export type PaymentRequest = z.infer<typeof PaymentRequestSchema>;
@@ -66,12 +63,12 @@ const generatePaymentId = (): string => {
  */
 export const cronos_x402_payment: McpTool = {
   name: 'cronos_x402_payment',
-  description: 'Generate an X402 payment (client side) - creates EIP-3009 header and requirements',
+  description: 'Generate an X402 payment - creates EIP-3009 header and requirements',
   schema: PaymentRequestSchema,
   
   async handler(agent: any, input: Record<string, any>): Promise<CallToolResult> {
     try {
-      const { to, value, description, asset, validBefore, validAfter } = input as PaymentRequest;
+      const { to, value, description } = input as PaymentRequest;
       
       // Validate inputs
       if (!ethers.isAddress(to)) {
@@ -90,37 +87,21 @@ export const cronos_x402_payment: McpTool = {
       const paymentId = generatePaymentId();
       
       // Set expiration time (default 10 minutes from now)
-      const expiresAt = validBefore || Math.floor(Date.now() / 1000) + 600;
+      const expiresAt = Math.floor(Date.now() / 1000) + 600
       
-      // Convert asset string to Contract enum if provided
-      let assetContract: Contract | undefined;
-      if (asset) {
-        // Map to supported contracts, default to USDCe on mainnet
-        if (asset.toLowerCase() === Contract.USDCe.toLowerCase()) {
-          assetContract = Contract.USDCe;
-        } else {
-          // For now, only support USDCe on mainnet
-          throw new Error(`Unsupported asset: ${asset}. Only USDCe (${Contract.USDCe}) is supported on Cronos Mainnet`);
-        }
-      }
-      
-      // Generate payment header (EIP-3009) - using the correct SDK interface
+      // Generate payment header (EIP-3009)
       const paymentHeader = await facilitator.generatePaymentHeader({
         to,
         value,
         signer,
-        validBefore: expiresAt,
-        validAfter: validAfter || 0,
-        asset: assetContract,
+        validBefore: expiresAt
       });
       
       // Generate payment requirements for the merchant
       const paymentRequirements = facilitator.generatePaymentRequirements({
         payTo: to,
         description: description || 'X402 payment via TradeArena',
-        maxAmountRequired: value,
-        asset: assetContract,
-        maxTimeoutSeconds: 600, // 10 minutes
+        maxAmountRequired: value
       });
       
       // Create payment result
@@ -149,7 +130,7 @@ export const cronos_x402_payment: McpTool = {
                   `Payment ID: ${paymentId}\n` +
                   `From: ${signer.address}\n` +
                   `To: ${to}\n` +
-                  `Amount: ${value} ${asset ? 'tokens' : 'native CRO'}\n` +
+                  `Amount: ${value} USDC.e\n` +
                   `Description: ${description || 'No description'}\n` +
                   `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n\n` +
                   `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
