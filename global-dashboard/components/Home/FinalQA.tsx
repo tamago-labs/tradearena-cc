@@ -10,33 +10,34 @@ const FinalQA = () => {
 
     const faqs = [
         {
+            question: "How do I get started with my first AI agent?",
+            answer: "Download TradeArena terminal from our github. Install dependencies as per instruction then you can setup AI model and trading chain.",
+            category: "getting-started"
+        },
+        {
+            question: "Is my capital safe with AI agents trading?",
+            answer: "Everything is run locally. You need to provide private key for local MCP server to sign transaction which acts like a buffer the AI never this sensitive info.",
+            category: "security"
+        },
+        {
             question: "How does AI decision verification work?",
-            answer: "Every AI decision is recorded on Walrus decentralized storage with cryptographic proof. You can verify any trade or strategy decision by checking the Walrus blob ID, which contains the complete decision context, reasoning, and execution data. This ensures complete transparency and auditability.",
+            answer: "Optionally, you can enable or disable on the settings menu but once enabled this will store AI decision into Walrus (Testnet for now) that later we will use this to construct performance ranking that benefits to all vibe traders.",
             category: "verification"
         },
         {
             question: "Which AI model performs best in DeFi trading?",
-            answer: "Different AI models excel in different market conditions. GPT-5 shows strong performance in trending markets, Claude Sonnet 4.5 excels in risk management, and Llama 4 performs well in volatile conditions. TradeArena tracks performance transparently, so you can see real-time rankings based on actual trading results.",
+            answer: "You can check this on the Arena page and make possible by everyone sharing trading decision on each AI model to improve collective intelligence.",
             category: "performance"
         },
-        {
-            question: "Is my capital safe with AI agents trading?",
-            answer: "Yes. Your capital is protected by multiple layers: 1) Smart contracts are audited and battle-tested, 2) AI agents have risk limits and position size controls, 3) All trades are recorded and verifiable on Walrus, 4) You maintain full control and can stop agents anytime. The platform has been running securely on Sui Mainnet.",
-            category: "security"
-        },
-        {
-            question: "How do I get started with my first AI agent?",
-            answer: "It's simple: 1) Connect your Sui wallet, 2) Choose your AI model (GPT-5, Claude, or Llama), 3) Set your risk preferences, 4) Deploy with one click. The process takes under 5 minutes and you can monitor your agent's performance in real-time with complete transparency.",
-            category: "getting-started"
-        },
+
         {
             question: "Can I customize my AI agent's trading strategy?",
-            answer: "Yes! You can configure risk levels, choose specific DeFi protocols, set position sizes, define trading pairs, and customize strategy parameters. Advanced users can also provide custom prompts and constraints while maintaining full verification of all decisions.",
+            answer: "You can keep chatting with AI before decide what you going to do and this conversation will keep locally and resume at anytime.",
             category: "customization"
         },
         {
             question: "What DeFi protocols are supported?",
-            answer: "TradeArena supports 15+ DeFi tools across 6 major protocols including Scallop (lending/borrowing), SNS Domains, Pyth Network (price feeds), Sui staking, token management, and transaction analytics. More protocols are added regularly based on community demand and security audits.",
+            answer: "Support 20+ across 3 different blockchain. More will be added.",
             category: "protocols"
         }
     ];
@@ -62,7 +63,7 @@ const FinalQA = () => {
                         transition={{ delay: 0.2 }}
                     >
                         <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                            Frequently Asked 
+                            Frequently Asked
                         </span>
                         <span className="text-green-400">
                             {' '}Questions
@@ -87,7 +88,7 @@ const FinalQA = () => {
                 >
                     {faqs.map((faq, index) => {
                         const isActive = activeQuestion === index;
-                        
+
                         return (
                             <motion.div
                                 key={index}
@@ -101,7 +102,7 @@ const FinalQA = () => {
                                     className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-800/30 transition-colors"
                                 >
                                     <span className="text-white font-semibold">{faq.question}</span>
-                                    
+
                                     <motion.div
                                         animate={{ rotate: isActive ? 180 : 0 }}
                                         transition={{ duration: 0.3 }}
@@ -109,7 +110,7 @@ const FinalQA = () => {
                                         <ChevronDown className="w-5 h-5 text-gray-400" />
                                     </motion.div>
                                 </button>
-                                
+
                                 <AnimatePresence>
                                     {isActive && (
                                         <motion.div
@@ -131,7 +132,7 @@ const FinalQA = () => {
                 </motion.div>
 
                 {/* CTA Section */}
-                <motion.div
+                {/* <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8 }}
@@ -186,9 +187,9 @@ const FinalQA = () => {
                                 <ExternalLink className="w-5 h-5 ml-2 group-hover:translate-y-[-2px] transition-transform" />
                             </Link>
                         </motion.div>
+ 
 
-                        {/* Community Stats */}
-                        {/* <motion.div
+                        <motion.div
                             className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12"
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
@@ -206,9 +207,9 @@ const FinalQA = () => {
                                 <div className="text-2xl font-bold text-green-400 mb-1">$2M+</div>
                                 <div className="text-sm text-gray-400">TVL Protected</div>
                             </div>
-                        </motion.div> */}
+                        </motion.div>
                     </div>
-                </motion.div>
+                </motion.div> */}
             </div>
         </section>
     );

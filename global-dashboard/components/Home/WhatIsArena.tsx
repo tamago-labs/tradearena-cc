@@ -1,15 +1,9 @@
 "use client"
 
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react'; 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WhatIsArena = () => {
-    const [activeTab, setActiveTab] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
-    const sectionRef = useRef<HTMLDivElement>(null);
-
-    const tabs = [
+    const features = [
         {
             title: "Data Categorization",
             description: "Automatically organizes raw trading data by strategy type - DEX trades, staking positions, yield farming, and more.",
@@ -36,28 +30,8 @@ const WhatIsArena = () => {
         }
     ];
 
-    // Auto-rotation effect
-    useEffect(() => {
-        if (isPaused) return;
-
-        const interval = setInterval(() => {
-            setActiveTab((prev) => (prev + 1) % tabs.length);
-        }, 5000); // 5 seconds
-
-        return () => clearInterval(interval);
-    }, [isPaused, tabs.length]);
-
-    // Handle mouse enter/leave for pause
-    const handleMouseEnter = () => setIsPaused(true);
-    const handleMouseLeave = () => setIsPaused(false);
-
     return (
-        <section 
-            ref={sectionRef}
-            className="py-20 px-6 bg-black/30"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-        >
+        <section className="py-20 px-6 bg-black/30">
             <div className="max-w-6xl mx-auto">
                 {/* Section Header */}
                 <motion.div
@@ -89,121 +63,54 @@ const WhatIsArena = () => {
                     </motion.p>
                 </motion.div>
 
-                {/* Main Content - Two Column Layout */}
+                {/* Cards Grid */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    className="flex flex-col lg:flex-row gap-8 max-w-5xl mx-auto"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto"
                 >
-                    {/* Side Tabs */}
-                    <div className="lg:w-1/3">
-                        <div className="space-y-2">
-                            {tabs.map((tab, index) => (
-                                <motion.button
-                                    key={index}
-                                    onClick={() => setActiveTab(index)}
-                                    className={`w-full text-left px-6 py-4 rounded-xl border transition-all duration-300 ${
-                                        activeTab === index
-                                            ? 'bg-green-900/30 border-green-600 text-white'
-                                            : 'bg-gray-900/30 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'
-                                    }`}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-2xl">{tab.icon}</span>
-                                        <div>
-                                            <div className="font-semibold">{tab.title}</div>
-                                            <div className="text-xs opacity-70">{tab.badge}</div>
-                                        </div>
-                                    </div>
-                                </motion.button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Content Area */}
-                    <div className="lg:w-2/3">
+                    {features.map((feature, index) => (
                         <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="bg-gray-900/30 border border-gray-800 rounded-2xl p-8"
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                            whileHover={{ 
+                                scale: 1.02,
+                                borderColor: 'rgba(34, 197, 94, 0.5)'
+                            }}
+                            className="bg-gray-900/30 border border-gray-800 rounded-2xl p-8 transition-all duration-300 hover:border-green-500/50"
                         >
-                            {/* Screenshot - Fixed version */}
-                            <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900" style={{ minHeight: '300px' }}>
-                                <div className="relative w-full h-[300px]">
-                                    <img 
-                                        src="/screenshot-1.png" 
-                                        alt={tabs[activeTab].title}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        style={{ display: 'block' }}
-                                    />
-                                    {/* Fallback overlay */}
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                        <div className="text-center text-white">
-                                            <div className="text-5xl mb-3">{tabs[activeTab].icon}</div>
-                                            <div className="font-semibold text-lg">{tabs[activeTab].title}</div>
-                                            <div className="text-sm opacity-70 mt-1">{tabs[activeTab].badge}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Icon */}
+                            <motion.div 
+                                className="text-6xl mb-6"
+                                initial={{ scale: 0 }}
+                                whileInView={{ scale: 1 }}
+                                transition={{ delay: 0.2 + index * 0.1 }}
+                            >
+                                {feature.icon}
+                            </motion.div>
 
                             {/* Content */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-3xl">{tabs[activeTab].icon}</span>
-                                    <h3 className="text-2xl font-bold text-white">
-                                        {tabs[activeTab].title}
-                                    </h3>
-                                </div>
+                                {/* Title */}
+                                <h3 className="text-2xl font-bold text-white">
+                                    {feature.title}
+                                </h3>
                                 
-                                <p className="text-gray-300 leading-relaxed text-lg">
-                                    {tabs[activeTab].description}
+                                {/* Description */}
+                                <p className="text-gray-300 leading-relaxed">
+                                    {feature.description}
                                 </p>
 
                                 {/* Badge */}
-                                <div className="inline-block px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-full">
-                                    {tabs[activeTab].badge}
-                                </div>
+                                {/* <div className="inline-block px-4 py-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 text-green-400 font-semibold rounded-full border border-green-600/30">
+                                    {feature.badge}
+                                </div> */}
                             </div>
                         </motion.div>
-
-                        {/* Navigation Buttons */}
-                        <div className="flex justify-between items-center mt-6">
-                            <button
-                                onClick={() => setActiveTab((prev) => (prev === 0 ? tabs.length - 1 : prev - 1))}
-                                className="bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-all"
-                            >
-                                <ChevronLeft className="w-5 h-5 text-gray-300" />
-                            </button>
-                            
-                            {/* Tab Indicators */}
-                            <div className="flex gap-2">
-                                {tabs.map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setActiveTab(index)}
-                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                            index === activeTab
-                                                ? 'bg-green-400 w-8'
-                                                : 'bg-gray-600 hover:bg-gray-500'
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                            
-                            <button
-                                onClick={() => setActiveTab((prev) => (prev + 1) % tabs.length)}
-                                className="bg-black/90 backdrop-blur-sm border border-gray-700 rounded-full p-3 hover:bg-gray-900 transition-all"
-                            >
-                                <ChevronRight className="w-5 h-5 text-gray-300" />
-                            </button>
-                        </div>
-                    </div>
+                    ))}
                 </motion.div>
             </div>
         </section>

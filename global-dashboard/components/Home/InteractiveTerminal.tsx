@@ -32,8 +32,7 @@ const InteractiveTerminal = ({ autoStart = false, embedded = false }: { autoStar
         'Interactive Mode',
         'Manage Views', 
         'Configure Agent',
-        'Walrus Settings',
-        'Agent Logs'
+        'Settings'
     ];
 
     const interactiveMenuItems = [
