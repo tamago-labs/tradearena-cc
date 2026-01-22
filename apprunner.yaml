@@ -20,10 +20,11 @@ run:
     
     # --- Build MCP Servers in Parallel ---
     - echo "Building MCP servers in parallel..."
-    - cd core-mcp && npm install && npm run build & \
-      cd kaia-mcp && npm install && npm run build & \
-      cd cronos-mcp && npm install && npm run build & \
-      cd sui-mcp && npm install && npm run build && \
+    - |
+      cd core-mcp && npm install && npm run build &
+      cd kaia-mcp && npm install && npm run build &
+      cd cronos-mcp && npm install && npm run build &
+      cd sui-mcp && npm install && npm run build &&
       wait
     
     # Verify installations
