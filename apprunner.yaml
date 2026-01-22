@@ -18,14 +18,15 @@ run:
     - curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
     - yum install -y nodejs
     
-    # --- Build MCP Servers in Parallel ---
-    - echo "Building MCP servers in parallel..."
-    - |
-      cd core-mcp && npm install && npm run build &
-      cd kaia-mcp && npm install && npm run build &
-      cd cronos-mcp && npm install && npm run build &
-      cd sui-mcp && npm install && npm run build &&
-      wait
+    # --- Build MCP Servers Sequentially ---
+    - echo "Building core-mcp..."
+    - cd core-mcp && npm install && npm run build && cd ..
+    - echo "Building kaia-mcp..."
+    - cd kaia-mcp && npm install && npm run build && cd ..
+    - echo "Building cronos-mcp..."
+    - cd cronos-mcp && npm install && npm run build && cd ..
+    - echo "Building sui-mcp..."
+    - cd sui-mcp && npm install && npm run build && cd ..
     
     # Verify installations
     - echo "Verifying installations..."
