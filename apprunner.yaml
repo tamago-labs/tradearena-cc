@@ -1,0 +1,47 @@
+version: 1.0
+runtime: python311
+build:
+  commands:
+    build:
+      - echo "Build command..."
+
+run:
+  runtime-version: 3.11
+  pre-run:
+    - echo "Installing Python dependencies..."
+    - pip3 install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
+    
+    # --- Install Node.js 22 for Amazon Linux ---
+    - echo "Installing Node.js 22..."
+    - curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+    - yum install -y nodejs
+    
+    # --- Build MCP Servers in Parallel ---
+    - echo "Building MCP servers in parallel..."
+    - cd core-mcp && npm install && npm run build & \
+      cd kaia-mcp && npm install && npm run build & \
+      cd cronos-mcp && npm install && npm run build & \
+      cd sui-mcp && npm install && npm run build && \
+      wait
+    
+    # Verify installations
+    - echo "Verifying installations..."
+    - python3 --version
+    - node -v
+    - npm -v
+    - npx --version
+    - echo "Verifying MCP builds..."
+    - ls -la core-mcp/dist/
+    - ls -la kaia-mcp/dist/
+    - ls -la cronos-mcp/dist/
+    - ls -la sui-mcp/dist/
+    
+  command: python3 main.py
+  network: 
+    port: 8000
+    env: PORT
+  secrets:
+    - name: CREDENTIALS_ENV
+      value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:tradearena-9lQ1sd"
