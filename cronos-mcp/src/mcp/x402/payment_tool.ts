@@ -4,12 +4,14 @@ import { ethers } from 'ethers';
 import { type McpTool } from '../../types.js';
 import { z } from 'zod';
 import * as crypto from 'node:crypto';
+import axios from 'axios';
 
 // Schema for payment request
 export const PaymentRequestSchema = z.object({
   to: z.string().describe('Recipient address to pay'),
   value: z.string().describe('Amount to pay in base units (e.g., 1000000 for 1 USDC.e)'),
-  description: z.string().optional().describe('Payment description')
+  description: z.string().optional().describe('Payment description'),
+  apiEndpoint: z.string().optional().describe('Optional API endpoint to submit payment to for immediate settlement'),
 });
 
 export type PaymentRequest = z.infer<typeof PaymentRequestSchema>;
@@ -68,7 +70,7 @@ export const cronos_x402_payment: McpTool = {
   
   async handler(agent: any, input: Record<string, any>): Promise<CallToolResult> {
     try {
-      const { to, value, description } = input as PaymentRequest;
+      const { to, value, description, apiEndpoint } = input as PaymentRequest;
       
       // Validate inputs
       if (!ethers.isAddress(to)) {
@@ -121,7 +123,63 @@ export const cronos_x402_payment: McpTool = {
         signerAddress: signer.address,
         expiresAt,
       };
+
+      // If apiEndpoint is provided, submit the payment immediately
+      if (apiEndpoint) {
+        try {
+          const submitResponse = await axios.post(apiEndpoint, {
+            paymentId,
+            paymentHeader,
+            paymentRequirements: paymentResult.paymentRequirements,
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            timeout: 30000, // 30 second timeout
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `✅ X402 payment generated and submitted successfully!\n\n` +
+                      `Payment ID: ${paymentId}\n` +
+                      `From: ${signer.address}\n` +
+                      `To: ${to}\n` +
+                      `Amount: ${value} USDC.e\n` +
+                      `Description: ${description || 'No description'}\n` +
+                      `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
+                      `Submitted to: ${apiEndpoint}\n\n` +
+                      `🎯 Merchant Response:\n${JSON.stringify(submitResponse.data, null, 2)}\n\n` +
+                      `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
+                      `💡 Payment was submitted and processed by the merchant.`
+              }
+            ]
+          };
+        } catch (submitError) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `⚠️ X402 payment generated but submission failed\n\n` +
+                      `Payment ID: ${paymentId}\n` +
+                      `From: ${signer.address}\n` +
+                      `To: ${to}\n` +
+                      `Amount: ${value} USDC.e\n` +
+                      `Description: ${description || 'No description'}\n` +
+                      `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
+                      `Submission Error: ${submitError instanceof Error ? submitError.message : 'Unknown error'}\n\n` +
+                      `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
+                      `📋 Payment Requirements:\n${JSON.stringify(paymentResult.paymentRequirements, null, 2)}\n\n` +
+                      `💡 Payment was generated but failed to submit to ${apiEndpoint}. You can manually submit the payment data above.`
+              }
+            ],
+            isError: true
+          };
+        }
+      }
       
+      // Default behavior: return payment data for manual submission
       return {
         content: [
           {
