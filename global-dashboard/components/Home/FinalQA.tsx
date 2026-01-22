@@ -11,33 +11,33 @@ const FinalQA = () => {
     const faqs = [
         {
             question: "How do I get started with my first AI agent?",
-            answer: "Download TradeArena terminal from our github. Install dependencies as per instruction then you can setup AI model and trading chain.",
+            answer: "Download the TradeArena terminal from our GitHub. Install dependencies as per the instructions, then you can set up your AI model and trading configuration.",
             category: "getting-started"
         },
         {
             question: "Is my capital safe with AI agents trading?",
-            answer: "Everything is run locally. You need to provide private key for local MCP server to sign transaction which acts like a buffer the AI never this sensitive info.",
+            answer: "Everything runs locally. You provide your private key to the local MCP server to sign transactions. This acts as a security buffer, ensuring the AI never accesses your sensitive information.",
             category: "security"
         },
         {
             question: "How does AI decision verification work?",
-            answer: "Optionally, you can enable or disable on the settings menu but once enabled this will store AI decision into Walrus (Testnet for now) that later we will use this to construct performance ranking that benefits to all vibe traders.",
+            answer: "You can enable or disable this feature in the settings menu. When enabled, AI decisions are stored on Walrus (Testnet). This data will be used to build performance rankings that benefit the entire trading community.",
             category: "verification"
         },
         {
             question: "Which AI model performs best in DeFi trading?",
-            answer: "You can check this on the Arena page and make possible by everyone sharing trading decision on each AI model to improve collective intelligence.",
+            answer: "You can check model performance on the Arena page. Rankings are made possible by everyone sharing their trading decisions for each AI model, which helps improve collective intelligence.",
             category: "performance"
         },
 
         {
             question: "Can I customize my AI agent's trading strategy?",
-            answer: "You can keep chatting with AI before decide what you going to do and this conversation will keep locally and resume at anytime.",
+            answer: "You can continue chatting with the AI before deciding what to do. This conversation is stored locally and can be resumed at any time.",
             category: "customization"
         },
         {
             question: "What DeFi protocols are supported?",
-            answer: "Support 20+ across 3 different blockchain. More will be added.",
+            answer: "We support 20+ protocols across 3 different blockchains, with more being added regularly.",
             category: "protocols"
         }
     ];

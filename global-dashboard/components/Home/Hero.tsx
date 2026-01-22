@@ -1,13 +1,16 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import InteractiveTerminal from './InteractiveTerminal';
+import DemoModal from './DemoModal';
 
 const Hero = () => {
+    const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
     return (
         <div className="relative flex items-center justify-center overflow-hidden">
             {/* Animated gradient background */}
@@ -88,15 +91,13 @@ const Hero = () => {
                             transition={{ delay: 0.5 }}
                             className="flex flex-col sm:flex-row gap-4"
                         >
-                            <Link
-                                href="http://localhost:8000"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                onClick={() => setIsDemoModalOpen(true)}
                                 className="px-8 py-4 bg-gradient-to-r from-[#00ff88] to-[#00d4ff] text-black font-bold rounded-lg hover:shadow-lg hover:shadow-[#00ff88]/50 transition-all flex items-center justify-center group"
                             >
                                 Try Live Terminal
                                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Link>
+                            </button>
                             <Link
                                 href="/about"
                                 className="px-8 py-4 bg-black/60 border border-gray-700 text-white font-semibold rounded-lg hover:border-gray-600 transition-all flex items-center justify-center group"
@@ -178,6 +179,12 @@ const Hero = () => {
                     </motion.div>
                 </div>
             </div>
+            
+            {/* Demo Modal */}
+            <DemoModal 
+                isOpen={isDemoModalOpen} 
+                onClose={() => setIsDemoModalOpen(false)} 
+            />
         </div>
     );
 };
