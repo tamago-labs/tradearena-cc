@@ -27,22 +27,38 @@ class MCPManager:
         self._load_credentials()
     
     def _load_credentials(self) -> None:
-        """Load environment variables from credentials file"""
-        credentials_path = os.path.join(os.getcwd(), "config", "credentials.env")
-        try:
-            if os.path.exists(credentials_path):
-                logger.info(f"Loading credentials from {credentials_path}")
-                with open(credentials_path, 'r') as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#') and '=' in line:
-                            key, value = line.split('=', 1)
-                            os.environ[key.strip()] = value.strip()
-                logger.info("Credentials loaded successfully")
-            else:
-                logger.warning(f"Credentials file not found at {credentials_path}")
-        except Exception as e:
-            logger.error(f"Failed to load credentials: {e}")
+        """Load environment variables from CREDENTIALS_ENV or credentials.env file"""
+        
+        # Check if credentials content is provided in environment variable
+        credentials_env = os.getenv("CREDENTIALS_ENV")
+        
+        if credentials_env:
+            # Parse key-value pairs from CREDENTIALS_ENV content
+            logger.info("Loading credentials from CREDENTIALS_ENV environment variable")
+            for line in credentials_env.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+            logger.info("Credentials loaded successfully from environment variable")
+        else:
+            # Default to loading from config/credentials.env file
+            credentials_path = os.path.join(os.getcwd(), "config", "credentials.env")
+            logger.info(f"CREDENTIALS_ENV not set, loading from file: {credentials_path}")
+            
+            try:
+                if os.path.exists(credentials_path):
+                    with open(credentials_path, 'r') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith('#') and '=' in line:
+                                key, value = line.split('=', 1)
+                                os.environ[key.strip()] = value.strip()
+                    logger.info("Credentials loaded successfully from file")
+                else:
+                    logger.warning(f"Credentials file not found at {credentials_path}")
+            except Exception as e:
+                logger.error(f"Failed to load credentials from file: {e}")
     
     def _substitute_env_vars(self, text: str) -> str:
         """Substitute environment variables in text using ${VAR} pattern"""
