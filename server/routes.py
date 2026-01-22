@@ -41,7 +41,7 @@ from .tools import (
     list_available_views
 )
 from .views_manager import views_manager
-from .mcp_manager import mcp_manager
+from .mcp_manager import MCPManager
 
 def create_conversation_manager() -> SlidingWindowConversationManager:
     """Create conversation manager with fixed settings for all agents"""
@@ -172,6 +172,9 @@ def initialize_strands_agent(agent_data: dict, agent_id: str, session_id: str = 
             logger.info("Web search enabled - added http_request tool")
         except ImportError:
             logger.warning("strands_tools not available - web search disabled")
+    
+    # Create MCP manager instance on-demand
+    mcp_manager = MCPManager()
     
     # Initialize agent based on provider
     if ai_provider == "amazon-bedrock":
@@ -337,6 +340,9 @@ def cleanup_agent_resources(agent_instance: Agent):
         # Get trading chain from agent state to clean up MCP clients
         agent_state = getattr(agent_instance, 'state', {})
         trading_chain = agent_state.get("agent_config", {}).get("trading_chain", "unknown")
+        
+        # Create MCP manager instance on-demand for cleanup
+        mcp_manager = MCPManager()
         
         # Clean up MCP clients through the MCP manager
         if trading_chain and trading_chain != "unknown":

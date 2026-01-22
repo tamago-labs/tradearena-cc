@@ -3,6 +3,7 @@ FastAPI web server for TradeArena CLI
 Provides HTML interface and API endpoints for configuration and monitoring
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -38,11 +39,11 @@ server_state = {
     "thread": None
 }
 
-def run_server(host: str = "127.0.0.1", port: int = 8000):
+def run_server(host: str = "0.0.0.0", port: int = 8000):
     """Run the FastAPI server"""
     uvicorn.run(app, host=host, port=port, log_level="info")
 
-def start_server_thread(host: str = "127.0.0.1", port: int = 8000):
+def start_server_thread(host: str = "0.0.0.0", port: int = 8000):
     """Start server in a background thread"""
     if server_state["running"]:
         return False, "Server is already running"
@@ -72,4 +73,7 @@ def stop_server():
     return True, "Server stopped"
 
 if __name__ == "__main__":
-    run_server()
+    # Use environment variable for host if set (for App Runner compatibility)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    run_server(host=host, port=port)

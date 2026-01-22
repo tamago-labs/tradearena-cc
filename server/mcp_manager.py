@@ -197,4 +197,4 @@ class MCPManager:
             self.active_clients.clear()
 
 # Global MCP manager instance
-mcp_manager = MCPManager()
+# mcp_manager = MCPManager()  # Commented out to prevent initialization at import time
