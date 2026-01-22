@@ -26,7 +26,7 @@ run:
     - echo "Building cronos-mcp..."
     - cd cronos-mcp && npm install && npm run build && cd ..
     - echo "Building sui-mcp..."
-    - cd sui-mcp && npm install && npm run build && cd ..
+    - cd sui-mcp && npm install --legacy-peer-deps && npm run build && cd ..
     
     # Verify installations
     - echo "Verifying installations..."
