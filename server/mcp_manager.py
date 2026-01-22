@@ -35,7 +35,11 @@ class MCPManager:
         if credentials_env:
             # Parse key-value pairs from CREDENTIALS_ENV content
             logger.info("Loading credentials from CREDENTIALS_ENV environment variable")
-            for line in credentials_env.split('\n'):
+            
+            # Handle both literal \n and actual newlines for flexibility
+            credentials_content = credentials_env.replace('\\n', '\n')
+            
+            for line in credentials_content.split('\n'):
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
