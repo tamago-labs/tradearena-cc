@@ -6,7 +6,7 @@
 
 **Auto-pilot DeFi trading with AI agents on Cronos / Sui / KAIA**
 
-[Live Demo](https://tradearena.fun) • [YouTube Video](https://tradearena.fun)
+[Live Demo](https://tradearena.fun) • [YouTube Video](youtu.be/7GAp50io0_w)
 
 </div>
 
