@@ -1,70 +1,39 @@
-# TradeArena - The Vibe Trading Arena for DeFi
+# TradeArena 
 
 <div align="center">
 
-![TradeArena Logo](public/tradearena-icon.png)
+<img width="1303" height="691" alt="Screenshot from 2026-01-23 09-46-28" src="https://github.com/user-attachments/assets/3a99af86-b9a1-4ff3-b458-ec467d3fa2df" />
 
-**AI-Powered Multi-Chain DeFi Trading Platform**
+**Auto-pilot DeFi trading with AI agents on Cronos / Sui / KAIA**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://www.typescriptlang.org/)
-
-[Live Demo](https://tradearena.fun) • [Documentation](#documentation) • [Report Issues](https://github.com/tamago-labs/tradearena-cc/issues)
+[Live Demo](https://tradearena.fun) • [YouTube Video](https://tradearena.fun)
 
 </div>
 
-## Executive Summary
+**TradeArena** is an AI-powered tool that enables auto-pilot DeFi trading, supporting leading AI models (Claude, DeepSeek, GPT-5, Llama) and powered by the **Strands Agents** — a Python framework from **AWS** for building fully functional multi-agent systems. With pre-built MCP tools, AI agents can search for opportunities across multiple blockchains and execute **x402 payments** directly on-chain. Each action can be recorded on **Walrus**, creating a transparent and verifiable trail of AI-driven decisions.
 
-TradeArena is a cutting-edge DeFi trading platform that leverages AI agents to execute real on-chain strategies across multiple blockchains. Built with the Strands Agents framework, it enables autonomous trading, portfolio management, and decentralized storage of trading decisions using Walrus protocol.
-
-The platform features a retro terminal-style web interface, real-time market data integration, and supports major DeFi protocols across Cronos, Kaia, Sui, and Aptos networks. TradeArena bridges the gap between AI-powered analysis and actual blockchain execution, allowing users to deploy AI agents that trade with real capital in live markets.
+TradeArena features a retro terminal-style web interface with real-time market data. It bridges the gap between AI-powered analysis and actual blockchain execution, allowing users to deploy AI agents that trade with real capital in live markets.
 
 ## Highlighted Features
 
-### 🤖 AI-Powered Trading
-- **Strands Agents Framework**: Integration with Anthropic Claude, Google Gemini, and OpenAI models
-- **Autonomous Strategy Execution**: AI agents analyze market conditions and execute trades automatically
-- **Multi-Model Support**: Choose different AI models based on your trading preferences
-- **Real-time Decision Making**: Agents process live market data and adjust strategies dynamically
-
-### 🔗 Multi-Chain Support
-- **Cronos Mainnet**: VVS Finance, Crypto.com Exchange, X402 integration
-- **Kaia Mainnet**: KiloLend, DragonSwap protocols
-- **Sui Mainnet**: Scallop, 7k, SuiLend, SNS protocols
-- **Aptos Mainnet**: Coming soon
-
-### 📊 Advanced Features
-- **Real-time Price Feeds**: Pyth Network integration for accurate market data
-- **Decentralized Storage**: Walrus protocol for transparent and permanent trading records
-- **Interactive Terminal**: Retro-style web interface with live trading demonstrations
-- **Portfolio Analytics**: Real-time tracking of performance, P&L, and strategy effectiveness
-- **Risk Management**: Built-in safety mechanisms and health factor monitoring
-
-### 🌐 User Experience
-- **Modern Web Dashboard**: Next.js-based interface with responsive design
-- **Live Demo Environment**: Try the platform with demonstration funds
-- **Mobile-Responsive**: Access your trading arena from any device
-- **Real-time Updates**: WebSocket integration for live market data
+- **AI-Powered Auto Trading** - Autonomous agents built with Strands Agents SDK, supporting Claude, Gemini, GPT, and Llama, executing real on-chain transactions
+- **Multi-Chain DeFi Execution** - Trade across Cronos, Kaia, and Sui with native protocol integrations (VVS, KiloLend, and more)
+- **Agent-Built Visualization** - AI agents generate custom dashboards to visualize trades, reasoning, performance, and P&L
+- **Transparent & Verifiable Actions** - Optional Walrus storage records AI decisions and executions for auditability and trust
 
 ## Project Structure
 
 ```
 tradearena-cc/
-├── 📁 global-dashboard/          # Next.js web frontend
-│   ├── 📁 components/            # React components
-│   ├── 📁 app/                   # Next.js app router
-│   └── 📁 public/                # Static assets
-├── 📁 server/                    # Python FastAPI backend
+├── 📁 server/                    # TradeArena Terminal
 │   ├── 📁 templates/             # HTML templates
-│   └── 📁 tools/                 # Backend utilities
+│   └── 📁 tools/                 # View Generator Tool
 ├── 📁 core-mcp/                  # Core MCP server
 │   ├── 📁 src/mcp/pyth/          # Price feed integration
 │   └── 📁 src/tools/walrus/      # Decentralized storage
 ├── 📁 cronos-mcp/                # Cronos chain MCP server
 │   ├── 📁 src/mcp/vvs/           # VVS Finance integration
-│   └── 📁 src/mcp/defi/          # DeFi protocols
+│   └── 📁 src/mcp/defi/          # DeFi analytics via Cronos.com Agent SDK
 ├── 📁 kaia-mcp/                  # Kaia chain MCP server
 │   ├── 📁 src/mcp/kilolend/      # KiloLend integration
 │   └── 📁 src/mcp/dragonswap/    # DragonSwap integration
@@ -78,28 +47,6 @@ tradearena-cc/
 ## Architecture
 
 TradeArena follows a microservices architecture with clear separation of concerns:
-
-### System Components
-
-1. **Frontend Dashboard** (Next.js/React)
-   - User interface and interaction
-   - Real-time data visualization
-   - Terminal emulation and demo mode
-
-2. **Backend Server** (Python/FastAPI)
-   - AI agent orchestration
-   - Session management
-   - API endpoints and WebSocket handling
-
-3. **MCP Servers** (Node.js/TypeScript)
-   - Blockchain interactions
-   - Protocol integrations
-   - Real-time data feeds
-
-4. **AI Agents** (Strands Framework)
-   - Strategy development
-   - Market analysis
-   - Decision execution
 
 ### Data Flow
 
