@@ -2,19 +2,10 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Facilitator, CronosNetwork, Contract } from '@crypto.com/facilitator-client';
 import { ethers } from 'ethers';
 import { type McpTool } from '../../types.js';
+import { CronosWalletAgent } from '../../agent/wallet.js';
 import { z } from 'zod';
 import * as crypto from 'node:crypto';
 import axios from 'axios';
-
-// Schema for payment request
-export const PaymentRequestSchema = z.object({
-  to: z.string().describe('Recipient address to pay'),
-  value: z.string().describe('Amount to pay in base units (e.g., 1000000 for 1 USDC.e)'),
-  description: z.string().optional().describe('Payment description'),
-  apiEndpoint: z.string().optional().describe('Optional API endpoint to submit payment to for immediate settlement'),
-});
-
-export type PaymentRequest = z.infer<typeof PaymentRequestSchema>;
 
 // Schema for payment result
 export const PaymentResultSchema = z.object({
@@ -41,12 +32,9 @@ const createFacilitator = (): Facilitator => {
   return new Facilitator({ network: CronosNetwork.CronosMainnet });
 };
 
-// Helper function to create signer from private key
-const createSigner = (): ethers.Wallet => {
-  const privateKey = process.env.CRONOS_PRIVATE_KEY;
-  if (!privateKey) {
-    throw new Error('CRONOS_PRIVATE_KEY environment variable is required for making payments');
-  }
+// Helper function to create signer from CronosWalletAgent
+const createSigner = (agent: CronosWalletAgent): ethers.Wallet => {
+  const privateKey = agent.getPrivateKey();
   return new ethers.Wallet(privateKey);
 };
 
@@ -66,31 +54,36 @@ const generatePaymentId = (): string => {
 export const cronos_x402_payment: McpTool = {
   name: 'cronos_x402_payment',
   description: 'Generate an X402 payment - creates EIP-3009 header and requirements',
-  schema: PaymentRequestSchema,
-  
-  async handler(agent: any, input: Record<string, any>): Promise<CallToolResult> {
+  schema: {
+    to: z.string().describe('Recipient address to pay'),
+    value: z.string().describe('Amount to pay in base units (e.g., 1000000 for 1 USDC.e)'),
+    description: z.string().optional().describe('Payment description'),
+    apiEndpoint: z.string().optional().describe('Optional API endpoint to submit payment to for immediate settlement'),
+  },
+
+  async handler(agent: CronosWalletAgent, input: Record<string, any>): Promise<CallToolResult> {
     try {
-      const { to, value, description, apiEndpoint } = input as PaymentRequest;
-      
+      const { to, description, apiEndpoint, value } = input;
+
       // Validate inputs
       if (!ethers.isAddress(to)) {
         throw new Error('Invalid recipient address');
       }
-      
+
       if (!value || isNaN(Number(value)) || Number(value) <= 0) {
         throw new Error('Invalid payment amount');
       }
-      
+ 
       // Create facilitator and signer
       const facilitator = createFacilitator();
-      const signer = createSigner();
-      
+      const signer = createSigner(agent);
+
       // Generate unique payment ID
       const paymentId = generatePaymentId();
-      
+
       // Set expiration time (default 10 minutes from now)
       const expiresAt = Math.floor(Date.now() / 1000) + 600
-      
+
       // Generate payment header (EIP-3009)
       const paymentHeader = await facilitator.generatePaymentHeader({
         to,
@@ -98,14 +91,14 @@ export const cronos_x402_payment: McpTool = {
         signer,
         validBefore: expiresAt
       });
-      
+
       // Generate payment requirements for the merchant
       const paymentRequirements = facilitator.generatePaymentRequirements({
         payTo: to,
         description: description || 'X402 payment via TradeArena',
         maxAmountRequired: value
       });
-      
+
       // Create payment result
       const paymentResult: PaymentResult = {
         paymentId,
@@ -143,16 +136,16 @@ export const cronos_x402_payment: McpTool = {
               {
                 type: 'text',
                 text: `✅ X402 payment generated and submitted successfully!\n\n` +
-                      `Payment ID: ${paymentId}\n` +
-                      `From: ${signer.address}\n` +
-                      `To: ${to}\n` +
-                      `Amount: ${value} USDC.e\n` +
-                      `Description: ${description || 'No description'}\n` +
-                      `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
-                      `Submitted to: ${apiEndpoint}\n\n` +
-                      `🎯 Merchant Response:\n${JSON.stringify(submitResponse.data, null, 2)}\n\n` +
-                      `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
-                      `💡 Payment was submitted and processed by the merchant.`
+                  `Payment ID: ${paymentId}\n` +
+                  `From: ${signer.address}\n` +
+                  `To: ${to}\n` +
+                  `Amount: ${value} USDC.e\n` +
+                  `Description: ${description || 'No description'}\n` +
+                  `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
+                  `Submitted to: ${apiEndpoint}\n\n` +
+                  `🎯 Merchant Response:\n${JSON.stringify(submitResponse.data, null, 2)}\n\n` +
+                  `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
+                  `💡 Payment was submitted and processed by the merchant.`
               }
             ]
           };
@@ -162,50 +155,50 @@ export const cronos_x402_payment: McpTool = {
               {
                 type: 'text',
                 text: `⚠️ X402 payment generated but submission failed\n\n` +
-                      `Payment ID: ${paymentId}\n` +
-                      `From: ${signer.address}\n` +
-                      `To: ${to}\n` +
-                      `Amount: ${value} USDC.e\n` +
-                      `Description: ${description || 'No description'}\n` +
-                      `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
-                      `Submission Error: ${submitError instanceof Error ? submitError.message : 'Unknown error'}\n\n` +
-                      `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
-                      `📋 Payment Requirements:\n${JSON.stringify(paymentResult.paymentRequirements, null, 2)}\n\n` +
-                      `💡 Payment was generated but failed to submit to ${apiEndpoint}. You can manually submit the payment data above.`
+                  `Payment ID: ${paymentId}\n` +
+                  `From: ${signer.address}\n` +
+                  `To: ${to}\n` +
+                  `Amount: ${value} USDC.e\n` +
+                  `Description: ${description || 'No description'}\n` +
+                  `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n` +
+                  `Submission Error: ${submitError instanceof Error ? submitError.message : 'Unknown error'}\n\n` +
+                  `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
+                  `📋 Payment Requirements:\n${JSON.stringify(paymentResult.paymentRequirements, null, 2)}\n\n` +
+                  `💡 Payment was generated but failed to submit to ${apiEndpoint}. You can manually submit the payment data above.`
               }
             ],
             isError: true
           };
         }
       }
-      
+
       // Default behavior: return payment data for manual submission
       return {
         content: [
           {
             type: 'text',
             text: `✅ X402 payment generated successfully!\n\n` +
-                  `Payment ID: ${paymentId}\n` +
-                  `From: ${signer.address}\n` +
-                  `To: ${to}\n` +
-                  `Amount: ${value} USDC.e\n` +
-                  `Description: ${description || 'No description'}\n` +
-                  `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n\n` +
-                  `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
-                  `📋 Payment Requirements:\n${JSON.stringify(paymentResult.paymentRequirements, null, 2)}\n\n` +
-                  `💡 Submit these to a merchant's payment endpoint to complete the payment.`
+              `Payment ID: ${paymentId}\n` +
+              `From: ${signer.address}\n` +
+              `To: ${to}\n` +
+              `Amount: ${value} USDC.e\n` +
+              `Description: ${description || 'No description'}\n` +
+              `Expires at: ${new Date(expiresAt * 1000).toISOString()}\n\n` +
+              `📋 Payment Header (Base64):\n${paymentHeader}\n\n` +
+              `📋 Payment Requirements:\n${JSON.stringify(paymentResult.paymentRequirements, null, 2)}\n\n` +
+              `💡 Submit these to a merchant's payment endpoint to complete the payment.`
           }
         ]
       };
-      
+
     } catch (error) {
       return {
         content: [
           {
             type: 'text',
             text: `❌ X402 payment generation failed: ${error instanceof Error ? error.message : 'Unknown error'}\n\n` +
-                `💡 Make sure CRONOS_PRIVATE_KEY environment variable is set with a valid private key.`
-        }
+              `💡 Make sure the CronosWalletAgent is properly initialized with a valid private key.`
+          }
         ],
         isError: true
       };

@@ -18,8 +18,10 @@ export class CronosWalletAgent  {
   
   private account: Account | null = null;
   private walletClient: WalletClient | null = null;
+  private privateKey: string | undefined;
 
   constructor(privateKey?: string) {
+    this.privateKey = privateKey;
     if (privateKey) {
       // Initialize wallet for transaction capabilities
       // Ensure private key is properly formatted as hex string
@@ -63,6 +65,19 @@ export class CronosWalletAgent  {
       throw new Error('Wallet not initialized');
     }
     return this.account.address;
+  }
+
+  /**
+   * Get private key for external integrations (e.g., facilitator client)
+   * Note: This exposes the private key, use with caution
+   */
+  getPrivateKey(): string {
+    if (!this.privateKey) {
+      throw new Error('Private key not available in read-only mode');
+    }
+    
+    // Ensure it's properly formatted (with 0x prefix)
+    return this.privateKey.startsWith('0x') ? this.privateKey : `0x${this.privateKey}`;
   }
 
   /**
