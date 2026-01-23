@@ -99,7 +99,7 @@ const Hero = () => {
                                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                             </button>
                             <Link
-                                href="/about"
+                                href="https://www.youtube.com/watch?v=7GAp50io0_w&feature=youtu.be"
                                 className="px-8 py-4 bg-black/60 border border-gray-700 text-white font-semibold rounded-lg hover:border-gray-600 transition-all flex items-center justify-center group"
                             >
                                 <Play className="w-5 h-5 mr-2" />
